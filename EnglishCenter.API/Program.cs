@@ -1,4 +1,3 @@
-
 namespace EnglishCenter.API
 {
     public class Program
@@ -7,9 +6,22 @@ namespace EnglishCenter.API
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            // Add controllers
+            builder.Services.AddControllers();
+
+            // Add database
+
             // Add services to the container.
 
-            builder.Services.AddControllers();
+            // Add CORS for web client
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowWebClient", policy =>
+                    policy.WithOrigins("https://localhost:7197")  // Web URL
+                          .AllowAnyHeader()
+                          .AllowAnyMethod());
+            });
+
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
@@ -25,8 +37,9 @@ namespace EnglishCenter.API
 
             app.UseHttpsRedirection();
 
-            app.UseAuthorization();
+            app.UseCors("AllowWebClient");
 
+            app.UseAuthorization();
 
             app.MapControllers();
 
