@@ -1,0 +1,30 @@
+@model LoginPageViewModel
+
+@{
+    ViewData["Title"] = "Sign In";
+}
+
+<section class="auth-panel panel-card">
+    <div>
+        <p class="eyebrow">Secure Access</p>
+        <h1>Sign in to your workspace.</h1>
+        <p class="hero-copy">Use the account issued by the English Center system. Admin and teacher users will be routed to their own workspace after login.</p>
+    </div>
+
+    <form method="post" asp-action="Login" class="stack-form auth-form">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
+        <label>
+            <span>Username</span>
+            <input asp-for="Form.Username" autocomplete="username" />
+        </label>
+        <label>
+            <span>Password</span>
+            <input asp-for="Form.Password" type="password" autocomplete="current-password" />
+        </label>
+        <div class="action-stack">
+            <button class="btn btn-primary" type="submit">Sign in</button>
+            <a class="btn btn-outline-secondary" asp-controller="Home" asp-action="Index">Back</a>
+        </div>
+    </form>
+</section>

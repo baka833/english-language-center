@@ -10,8 +10,6 @@ namespace EnglishCenter.API.Data
             var db = services.GetRequiredService<EnglishCenterDbContext>();
             var hasher = services.GetRequiredService<IPasswordHasher<User>>();
 
-            if (db.Users.Any()) return;
-
             var seeds = new[]
             {
                 new { Username = "admin",    Password = "Admin@123",    Fullname = "System Admin",     Role = "Admin",   Gender = "Male",   Email = "admin@englishcenter.com",   Dob = new DateOnly(1985, 1, 1) },
@@ -22,7 +20,13 @@ namespace EnglishCenter.API.Data
                 new { Username = "student3", Password = "Student@123",  Fullname = "Hoang Van E",      Role = "Student", Gender = "Male",   Email = "student3@example.com",       Dob = new DateOnly(2001, 11, 5) },
             };
 
-            var users = seeds.Select(s =>
+            var existingUsernames = db.Users
+                .Select(user => user.Username)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            var users = seeds
+                .Where(seed => !existingUsernames.Contains(seed.Username))
+                .Select(s =>
             {
                 var user = new User
                 {
@@ -39,6 +43,11 @@ namespace EnglishCenter.API.Data
                 user.PasswordHash = hasher.HashPassword(user, s.Password);
                 return user;
             }).ToList();
+
+            if (users.Count == 0)
+            {
+                return;
+            }
 
             db.Users.AddRange(users);
             db.SaveChanges();

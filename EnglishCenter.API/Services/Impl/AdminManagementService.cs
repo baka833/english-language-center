@@ -501,7 +501,7 @@ public sealed class AdminManagementService : IAdminManagementService
             {
                 ClassId = classId,
                 ScheduleDate = scheduleDate,
-                DayOfWeek = (int)scheduleDate.DayOfWeek,
+                DayOfWeek = MapToStoredDayOfWeek(scheduleDate.DayOfWeek),
                 StartTime = slot.StartTime,
                 EndTime = slot.EndTime,
                 Room = request.RoomBySlotKey.TryGetValue(slotKey, out var room) ? NormalizeOptional(room) : null
@@ -951,12 +951,12 @@ public sealed class AdminManagementService : IAdminManagementService
             throw new ArgumentException("ScheduleDate is required.");
         }
 
-        if (schedule.DayOfWeek is < 0 or > 6)
+        if (schedule.DayOfWeek is < 2 or > 8)
         {
-            throw new ArgumentException("DayOfWeek must be between 0 and 6.");
+            throw new ArgumentException("DayOfWeek must be between 2 and 8.");
         }
 
-        if ((int)schedule.ScheduleDate.Value.DayOfWeek != schedule.DayOfWeek)
+        if (MapToStoredDayOfWeek(schedule.ScheduleDate.Value.DayOfWeek) != schedule.DayOfWeek)
         {
             throw new ArgumentException("DayOfWeek must match ScheduleDate.");
         }
@@ -1014,6 +1014,11 @@ public sealed class AdminManagementService : IAdminManagementService
     private static DateOnly GetWeekStartForMonth(DateOnly monthStart, int weekIndex)
     {
         return GetWeekStart(monthStart).AddDays(Math.Max(0, weekIndex) * 7);
+    }
+
+    private static int MapToStoredDayOfWeek(DayOfWeek dayOfWeek)
+    {
+        return dayOfWeek == DayOfWeek.Sunday ? 8 : ((int)dayOfWeek) + 1;
     }
 
     private static string BuildSlotKey(DateOnly date, int slotNumber)

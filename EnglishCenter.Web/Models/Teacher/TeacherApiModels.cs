@@ -1,6 +1,6 @@
-namespace EnglishCenter.API.DTOs;
+namespace EnglishCenter.Web.Models.Teacher;
 
-public sealed class TeacherAssignedClassDto
+public sealed class TeacherAssignedClassItem
 {
     public int ClassId { get; set; }
 
@@ -24,10 +24,10 @@ public sealed class TeacherAssignedClassDto
 
     public int StudentCount { get; set; }
 
-    public IReadOnlyCollection<ScheduleDto> Schedules { get; set; } = [];
+    public IReadOnlyCollection<TeacherScheduleSlotItem> Schedules { get; set; } = [];
 }
 
-public sealed class TeacherScheduleItemDto
+public sealed class TeacherScheduleItem
 {
     public int ScheduleId { get; set; }
 
@@ -54,7 +54,22 @@ public sealed class TeacherScheduleItemDto
     public string? Room { get; set; }
 }
 
-public sealed class TeacherStudentDto
+public sealed class TeacherScheduleSlotItem
+{
+    public int ScheduleId { get; set; }
+
+    public DateOnly? ScheduleDate { get; set; }
+
+    public int? DayOfWeek { get; set; }
+
+    public TimeOnly StartTime { get; set; }
+
+    public TimeOnly EndTime { get; set; }
+
+    public string? Room { get; set; }
+}
+
+public sealed class TeacherStudentItem
 {
     public int StudentId { get; set; }
 
@@ -69,7 +84,7 @@ public sealed class TeacherStudentDto
     public DateTime? EnrollmentDate { get; set; }
 }
 
-public sealed class AttendanceRecordDto
+public sealed class AttendanceRecordItem
 {
     public int? AttendanceId { get; set; }
 
@@ -84,7 +99,7 @@ public sealed class AttendanceRecordDto
     public string? Note { get; set; }
 }
 
-public sealed class UpsertAttendanceItemRequest
+public sealed class UpsertAttendanceItemRequestModel
 {
     public int StudentId { get; set; }
 
@@ -93,14 +108,14 @@ public sealed class UpsertAttendanceItemRequest
     public string? Note { get; set; }
 }
 
-public sealed class UpsertAttendanceRequest
+public sealed class UpsertAttendanceRequestModel
 {
     public DateOnly AttendanceDate { get; set; }
 
-    public IReadOnlyCollection<UpsertAttendanceItemRequest> Records { get; set; } = [];
+    public IReadOnlyCollection<UpsertAttendanceItemRequestModel> Records { get; set; } = [];
 }
 
-public sealed class AttendanceSummaryDto
+public sealed class AttendanceSummaryItem
 {
     public int ClassId { get; set; }
 
@@ -108,10 +123,10 @@ public sealed class AttendanceSummaryDto
 
     public int TotalSessions { get; set; }
 
-    public IReadOnlyCollection<StudentAttendanceSummaryDto> Students { get; set; } = [];
+    public IReadOnlyCollection<StudentAttendanceSummaryItem> Students { get; set; } = [];
 }
 
-public sealed class StudentAttendanceSummaryDto
+public sealed class StudentAttendanceSummaryItem
 {
     public int StudentId { get; set; }
 
@@ -128,7 +143,7 @@ public sealed class StudentAttendanceSummaryDto
     public int ExcusedCount { get; set; }
 }
 
-public sealed class TeacherGradeComponentDto
+public sealed class TeacherGradeComponentItem
 {
     public int ComponentId { get; set; }
 
@@ -139,14 +154,14 @@ public sealed class TeacherGradeComponentDto
     public decimal Weight { get; set; }
 }
 
-public sealed class UpsertGradeComponentRequest
+public sealed class UpsertGradeComponentRequestModel
 {
     public string ComponentName { get; set; } = string.Empty;
 
     public decimal Weight { get; set; }
 }
 
-public sealed class GradeEntryDto
+public sealed class GradeEntryItem
 {
     public int? GradeId { get; set; }
 
@@ -165,7 +180,7 @@ public sealed class GradeEntryDto
     public DateTime? UpdatedAt { get; set; }
 }
 
-public sealed class UpsertGradeRequest
+public sealed class UpsertGradeRequestModel
 {
     public int StudentId { get; set; }
 
@@ -174,7 +189,30 @@ public sealed class UpsertGradeRequest
     public string? TeacherComment { get; set; }
 }
 
-public sealed class CreateTeacherApplicationRequest
+public sealed class TeacherApplicationItem
+{
+    public int AppId { get; set; }
+
+    public int SenderId { get; set; }
+
+    public string SenderName { get; set; } = string.Empty;
+
+    public string SenderRole { get; set; } = string.Empty;
+
+    public string Title { get; set; } = string.Empty;
+
+    public string? Content { get; set; }
+
+    public string? Type { get; set; }
+
+    public string? Status { get; set; }
+
+    public string? AdminResponse { get; set; }
+
+    public DateTime? CreatedAt { get; set; }
+}
+
+public sealed class CreateTeacherApplicationRequestModel
 {
     public string Title { get; set; } = string.Empty;
 

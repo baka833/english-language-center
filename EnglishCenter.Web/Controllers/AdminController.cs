@@ -1,10 +1,12 @@
 using System.Globalization;
 using EnglishCenter.Web.Models.Admin;
 using EnglishCenter.Web.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EnglishCenter.Web.Controllers;
 
+[Authorize(Roles = "Admin")]
 public sealed class AdminController : Controller
 {
     private readonly IAdminApiClient _adminApiClient;
@@ -524,10 +526,13 @@ public sealed class AdminController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> SaveClassSchedule(int id, SaveSchedulePlannerForm form, CancellationToken cancellationToken)
+    public async Task<IActionResult> SaveClassSchedule(int id, [FromForm] SaveSchedulePlannerForm form, CancellationToken cancellationToken)
     {
         try
         {
+            form.SelectedSlots ??= [];
+            form.RoomBySlotKey ??= new Dictionary<string, string?>();
+
             var planner = await _adminApiClient.SaveSchedulePlannerAsync(id, form, cancellationToken);
             if (planner is null)
             {

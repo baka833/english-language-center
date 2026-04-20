@@ -28,5 +28,7 @@ public interface ITeacherManagementService
 
     Task<GradeEntryDto?> UpsertGradeAsync(int teacherId, int classId, int componentId, UpsertGradeRequest request, CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyCollection<ApplicationDto>> GetApplicationsAsync(int teacherId, CancellationToken cancellationToken = default);
+
     Task<ApplicationDto> CreateApplicationAsync(int teacherId, CreateTeacherApplicationRequest request, CancellationToken cancellationToken = default);
 }

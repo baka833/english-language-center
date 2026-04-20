@@ -1,0 +1,13 @@
+HTTP/1.1 302 Found
+Content-Length: 0
+Date: Mon, 20 Apr 2026 10:34:01 GMT
+Server: Kestrel
+Location: /Admin/ScheduleClass/3?month=4&year=2026&weekIndex=3
+Set-Cookie: .AspNetCore.Mvc.CookieTempDataProvider=CfDJ8P5K1Gof9j5JgtGZ-y7eyxNi5bE0JmVkqU-jgxVkY71zZ9FPGE8ZORXO8kr8FpoNZGOL-N-vKTGVtmVHvtQpVh3uwyV3gXZh1ekEyithdp7WLwAhJSI4ZtTJRBQfasDctbKUcf2uLBPbk1oqad4NtsNr2Q7XiNTBapnrBeWK0Dj1; path=/; samesite=lax; httponly
+
+HTTP/1.1 405 Method Not Allowed
+Content-Length: 0
+Date: Mon, 20 Apr 2026 10:34:01 GMT
+Server: Kestrel
+Allow: GET
+

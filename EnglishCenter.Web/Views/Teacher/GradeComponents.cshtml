@@ -1,0 +1,98 @@
+@model TeacherGradeComponentsPageViewModel
+
+@{
+    ViewData["Title"] = "Grade Components";
+}
+
+<section class="page-shell">
+    <div class="page-header">
+        <div>
+            <p class="eyebrow">Teacher Workspace</p>
+            <h1>@Model.ClassName</h1>
+            <p>Manage grade components and open the student gradebook for each component.</p>
+        </div>
+        <div class="action-stack">
+            <a class="btn btn-outline-secondary" asp-action="Classes">Back to Classes</a>
+        </div>
+    </div>
+
+    @if (Model.CanManageComponents)
+    {
+        <section class="panel-card accent-card">
+            <div class="panel-heading">
+                <h2>Create Component</h2>
+            </div>
+            <form method="post" asp-action="CreateGradeComponent" asp-route-classId="@Model.ClassId" class="stack-form compact-form">
+                @Html.AntiForgeryToken()
+                <div class="form-split">
+                    <label>
+                        <span>Component Name</span>
+                        <input asp-for="CreateForm.ComponentName" />
+                    </label>
+                    <label>
+                        <span>Weight</span>
+                        <input asp-for="CreateForm.Weight" type="number" step="0.01" min="0.01" max="100" />
+                    </label>
+                </div>
+                <div class="action-stack">
+                    <button class="btn btn-primary" type="submit">Create</button>
+                </div>
+            </form>
+        </section>
+    }
+    else
+    {
+        <section class="panel-card planner-notice-card">
+            <p>Admin has not granted grade component management permission for this class or your account. You can still view and enter grades for existing components.</p>
+        </section>
+    }
+
+    <section class="panel-card">
+        <div class="list-stack">
+            @if (Model.Components.Count == 0)
+            {
+                <div class="item-card">
+                    <div>
+                        <h3>No grade components.</h3>
+                        <p class="muted-line">Create the first component or ask admin to configure the class.</p>
+                    </div>
+                </div>
+            }
+            else
+            {
+                @foreach (var item in Model.Components)
+                {
+                    <article class="item-card teacher-card teacher-card-vertical">
+                        <form method="post" asp-action="UpdateGradeComponent" asp-route-classId="@Model.ClassId" asp-route-componentId="@item.ComponentId" class="stack-form compact-form grow-form">
+                            @Html.AntiForgeryToken()
+                            <div class="form-split">
+                                <label>
+                                    <span>Component Name</span>
+                                    <input name="ComponentName" value="@item.ComponentName" @(Model.CanManageComponents ? null : "readonly") />
+                                </label>
+                                <label>
+                                    <span>Weight</span>
+                                    <input name="Weight" value="@item.Weight" type="number" step="0.01" min="0.01" max="100" @(Model.CanManageComponents ? null : "readonly") />
+                                </label>
+                            </div>
+                            <div class="action-stack">
+                                <a class="btn btn-primary" asp-action="Grades" asp-route-classId="@Model.ClassId" asp-route-componentId="@item.ComponentId">Open Gradebook</a>
+                                @if (Model.CanManageComponents)
+                                {
+                                    <button class="btn btn-outline-secondary" type="submit">Update</button>
+                                }
+                            </div>
+                        </form>
+                        @if (Model.CanManageComponents)
+                        {
+                            <form method="post" asp-action="DeleteGradeComponent" asp-route-classId="@Model.ClassId" asp-route-componentId="@item.ComponentId">
+                                @Html.AntiForgeryToken()
+                                <button class="btn btn-outline-danger" type="submit">Delete</button>
+                            </form>
+                        }
+                    </article>
+                }
+            }
+        </div>
+    </section>
+</section>

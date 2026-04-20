@@ -1,0 +1,13 @@
+@{
+    ViewData["Title"] = "Access Denied";
+}
+
+<section class="panel-card auth-panel">
+    <p class="eyebrow">Authorization</p>
+    <h1>Access denied.</h1>
+    <p class="hero-copy">Your current account does not have permission to open this workspace or execute that action.</p>
+    <div class="action-stack">
+        <a class="btn btn-primary" asp-controller="Home" asp-action="Index">Go Home</a>
+        <a class="btn btn-outline-secondary" asp-controller="Account" asp-action="Login">Sign in again</a>
+    </div>
+</section>

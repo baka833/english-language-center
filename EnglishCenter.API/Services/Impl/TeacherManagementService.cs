@@ -30,7 +30,8 @@ public sealed class TeacherManagementService : ITeacherManagementService
             .Include(item => item.Course)
             .Include(item => item.ClassStudents)
             .Include(item => item.Schedules)
-            .Where(item => item.TeacherId == teacherId)
+            .Where(item => item.TeacherId == teacherId
+                && (item.Status == "Opening" || item.Status == "Ongoing"))
             .OrderBy(item => item.ClassName)
             .Select(item => MapAssignedClass(item, teacher))
             .ToListAsync(cancellationToken);
@@ -106,6 +107,11 @@ public sealed class TeacherManagementService : ITeacherManagementService
         if (!await IsAssignedClassAsync(teacherId, classId, cancellationToken))
         {
             return null;
+        }
+
+        if (request.AttendanceDate > DateOnly.FromDateTime(DateTime.Today))
+        {
+            throw new ArgumentException("Attendance cannot be recorded for a future date.", nameof(request));
         }
 
         if (request.Records.Count == 0)
@@ -436,6 +442,29 @@ public sealed class TeacherManagementService : ITeacherManagementService
         };
     }
 
+    public async Task<IReadOnlyCollection<ApplicationDto>> GetApplicationsAsync(int teacherId, CancellationToken cancellationToken = default)
+    {
+        var teacher = await EnsureTeacherAsync(teacherId, cancellationToken);
+
+        return await _dbContext.Applications.AsNoTracking()
+            .Where(item => item.SenderId == teacherId)
+            .OrderByDescending(item => item.CreatedAt)
+            .Select(item => new ApplicationDto
+            {
+                AppId = item.AppId,
+                SenderId = item.SenderId,
+                SenderName = teacher.Fullname,
+                SenderRole = teacher.Role ?? string.Empty,
+                Title = item.Title,
+                Content = item.Content,
+                Type = item.Type,
+                Status = item.Status,
+                AdminResponse = item.AdminResponse,
+                CreatedAt = item.CreatedAt
+            })
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<ApplicationDto> CreateApplicationAsync(int teacherId, CreateTeacherApplicationRequest request, CancellationToken cancellationToken = default)
     {
         var teacher = await EnsureTeacherAsync(teacherId, cancellationToken);
@@ -603,6 +632,7 @@ public sealed class TeacherManagementService : ITeacherManagementService
             Fullname = classStudent.Student.Fullname,
             Username = classStudent.Student.Username,
             Email = classStudent.Student.Email,
+            Dob = classStudent.Student.Dob,
             EnrollmentDate = classStudent.EnrollmentDate
         };
     }
@@ -672,9 +702,9 @@ public sealed class TeacherManagementService : ITeacherManagementService
 
     private static void ValidateGradeRequest(UpsertGradeRequest request)
     {
-        if (request.GradeValue.HasValue && (request.GradeValue.Value < 0 || request.GradeValue.Value > 100))
+        if (request.GradeValue.HasValue && (request.GradeValue.Value < 0 || request.GradeValue.Value > 10))
         {
-            throw new ArgumentException("Grade value must be between 0 and 100.", nameof(request));
+            throw new ArgumentException("Grade value must be between 0 and 10.", nameof(request));
         }
     }
 

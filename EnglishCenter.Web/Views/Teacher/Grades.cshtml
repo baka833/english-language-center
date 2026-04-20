@@ -1,0 +1,61 @@
+@model TeacherGradesPageViewModel
+
+@{
+    ViewData["Title"] = "Grades";
+}
+
+<section class="page-shell">
+    <div class="page-header">
+        <div>
+            <p class="eyebrow">Teacher Workspace</p>
+            <h1>@Model.ComponentName</h1>
+            <p>@Model.ClassName. Enter scores on a 0-10 scale and optional comments for each student.</p>
+        </div>
+        <div class="action-stack">
+            <a class="btn btn-outline-secondary" asp-action="GradeComponents" asp-route-classId="@Model.ClassId">Back to Components</a>
+        </div>
+    </div>
+
+    <form method="post" asp-action="SaveGrades" asp-route-classId="@Model.ClassId" asp-route-componentId="@Model.ComponentId" class="page-shell">
+        @Html.AntiForgeryToken()
+        <section class="panel-card">
+            <div class="table-wrap">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>Grade</th>
+                            <th>Comment</th>
+                            <th>Updated</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (var index = 0; index < Model.Form.Entries.Count; index++)
+                        {
+                            <tr>
+                                <td>
+                                    <input asp-for="Form.Entries[index].StudentId" type="hidden" />
+                                    <input asp-for="Form.Entries[index].StudentName" type="hidden" />
+                                    @Model.Form.Entries[index].StudentName
+                                </td>
+                                <td>
+                                    <input asp-for="Form.Entries[index].GradeValue" type="number" step="0.1" min="0" max="10" />
+                                </td>
+                                <td>
+                                    <input asp-for="Form.Entries[index].TeacherComment" />
+                                </td>
+                                <td>
+                                    @(Model.Form.Entries[index].UpdatedAt?.ToString("dd/MM/yyyy HH:mm") ?? "-")
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <div class="action-stack">
+            <button class="btn btn-primary" type="submit">Save Grades</button>
+        </div>
+    </form>
+</section>

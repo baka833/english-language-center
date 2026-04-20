@@ -1,0 +1,49 @@
+@model TeacherAttendanceSummaryPageViewModel
+
+@{
+    ViewData["Title"] = "Attendance Summary";
+}
+
+<section class="page-shell">
+    <div class="page-header">
+        <div>
+            <p class="eyebrow">Teacher Workspace</p>
+            <h1>@Model.Summary.ClassName</h1>
+            <p>Total marked sessions: @Model.Summary.TotalSessions.</p>
+        </div>
+        <div class="action-stack">
+            <a class="btn btn-outline-secondary" asp-action="Attendance" asp-route-classId="@Model.Summary.ClassId">Attendance</a>
+            <a class="btn btn-outline-secondary" asp-action="Classes">Back to Classes</a>
+        </div>
+    </div>
+
+    <section class="panel-card">
+        <div class="table-wrap">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Marked</th>
+                        <th>Present</th>
+                        <th>Absent</th>
+                        <th>Late</th>
+                        <th>Excused</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Summary.Students)
+                    {
+                        <tr>
+                            <td>@item.StudentName</td>
+                            <td>@item.MarkedSessions</td>
+                            <td>@item.PresentCount</td>
+                            <td>@item.AbsentCount</td>
+                            <td>@item.LateCount</td>
+                            <td>@item.ExcusedCount</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+</section>

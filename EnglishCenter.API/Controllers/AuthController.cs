@@ -31,7 +31,16 @@ namespace EnglishCenter.API.Controllers
             if (user == null)
                 return Unauthorized(new { message = "Invalid username or password." });
 
-            var result = _hasher.VerifyHashedPassword(user, user.PasswordHash, dto.Password);
+            PasswordVerificationResult result;
+            try
+            {
+                result = _hasher.VerifyHashedPassword(user, user.PasswordHash, dto.Password);
+            }
+            catch (FormatException)
+            {
+                return Unauthorized(new { message = "Invalid username or password." });
+            }
+
             if (result == PasswordVerificationResult.Failed)
                 return Unauthorized(new { message = "Invalid username or password." });
 

@@ -1,0 +1,49 @@
+@model TeacherClassesPageViewModel
+
+@{
+    ViewData["Title"] = "Assigned Classes";
+}
+
+<section class="page-shell">
+    <div class="page-header">
+        <div>
+            <p class="eyebrow">Teacher Workspace</p>
+            <h1>Assigned Classes</h1>
+            <p>Only classes currently opening or ongoing are shown here. Use the quick actions on each class to manage students, attendance and grades.</p>
+        </div>
+    </div>
+
+    <section class="panel-card">
+        <div class="list-stack">
+            @if (Model.Classes.Count == 0)
+            {
+                <div class="item-card">
+                    <div>
+                        <h3>No classes assigned.</h3>
+                        <p class="muted-line">Ask admin to assign you to an opening or ongoing class.</p>
+                    </div>
+                </div>
+            }
+            else
+            {
+                @foreach (var item in Model.Classes)
+                {
+                    <article class="item-card teacher-card">
+                        <div>
+                            <h3>@item.ClassName</h3>
+                            <p>@item.CourseName</p>
+                            <span class="micro-meta">Status: @(item.Status ?? "-") · Students: @item.StudentCount · Grade component permission: @(item.EffectiveCanManageGradeComponents ? "Enabled" : "Off")</span>
+                            <span class="micro-meta">Date range: @(item.StartDate?.ToString("dd/MM/yyyy") ?? "open") - @(item.EndDate?.ToString("dd/MM/yyyy") ?? "open")</span>
+                        </div>
+                        <div class="action-stack">
+                            <a class="btn btn-primary" asp-action="Students" asp-route-classId="@item.ClassId">Students</a>
+                            <a class="btn btn-outline-secondary" asp-action="Attendance" asp-route-classId="@item.ClassId">Attendance</a>
+                            <a class="btn btn-outline-secondary" asp-action="AttendanceSummary" asp-route-classId="@item.ClassId">Summary</a>
+                            <a class="btn btn-outline-secondary" asp-action="GradeComponents" asp-route-classId="@item.ClassId">Grades</a>
+                        </div>
+                    </article>
+                }
+            }
+        </div>
+    </section>
+</section>

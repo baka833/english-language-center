@@ -1,11 +1,13 @@
 using EnglishCenter.API.DTOs;
 using EnglishCenter.API.Services.Interface;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EnglishCenter.API.Controllers;
 
 [ApiController]
 [Route("api/admin")]
+[Authorize(Roles = "Admin")]
 public sealed class AdminController : ControllerBase
 {
     private readonly IAdminManagementService _adminManagementService;

@@ -150,6 +150,15 @@ a {
   background: rgba(28, 36, 51, 0.06);
 }
 
+.nav-button {
+  border: 0;
+  background: transparent;
+}
+
+.nav-user-badge .nav-link {
+  font-weight: 600;
+}
+
 .flash-banner {
   margin-bottom: 1rem;
   padding: 0.95rem 1.1rem;
@@ -269,6 +278,16 @@ a {
   display: block;
   margin-top: 0.4rem;
   font-size: 1.1rem;
+}
+
+.auth-panel {
+  max-width: 760px;
+  margin: 3rem auto 0;
+  padding: 2rem;
+}
+
+.auth-form {
+  margin-top: 1rem;
 }
 
 .admin-grid {
@@ -448,6 +467,30 @@ a {
 
 .item-card p {
   margin: 0.35rem 0;
+}
+
+.teacher-card {
+  align-items: start;
+}
+
+.teacher-card-vertical {
+  display: grid;
+  gap: 1rem;
+}
+
+.grow-form {
+  width: 100%;
+}
+
+.response-box {
+  padding: 0.9rem 1rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(28, 36, 51, 0.08);
+  background: rgba(28, 36, 51, 0.04);
+}
+
+.response-box p {
+  margin: 0.45rem 0 0;
 }
 
 .table-wrap {
@@ -717,6 +760,180 @@ a {
   font-weight: 600;
 }
 
+.teacher-schedule-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.calendar-title {
+  margin: 0;
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+}
+
+.teacher-schedule-nav {
+  display: flex;
+  align-items: end;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.teacher-schedule-filter {
+  align-items: end;
+}
+
+.teacher-schedule-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.9rem;
+  margin-top: 1.1rem;
+}
+
+.teacher-schedule-stats article {
+  padding: 0.95rem 1rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(28, 36, 51, 0.08);
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.teacher-schedule-stats span,
+.teacher-calendar-empty,
+.teacher-calendar-slot small,
+.teacher-calendar-slot span {
+  color: var(--muted);
+}
+
+.teacher-schedule-stats strong {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 1.4rem;
+}
+
+.teacher-calendar-shell {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.teacher-calendar-weekdays,
+.teacher-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.teacher-calendar-weekdays span {
+  padding: 0.35rem 0.5rem;
+  text-align: center;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.teacher-calendar-day {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 0.9rem;
+  min-height: 220px;
+  padding: 0.95rem;
+  border-radius: 1.2rem;
+  border: 1px solid rgba(28, 36, 51, 0.08);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(247, 241, 229, 0.88));
+}
+
+.teacher-calendar-day.is-outside {
+  opacity: 0.5;
+}
+
+.teacher-calendar-day.has-sessions {
+  border-color: rgba(223, 109, 45, 0.22);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+}
+
+.teacher-calendar-day.is-today {
+  background:
+    linear-gradient(180deg, rgba(255, 246, 235, 0.95), rgba(255, 236, 208, 0.92));
+  border-color: rgba(223, 109, 45, 0.42);
+}
+
+.teacher-calendar-day-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.teacher-calendar-day-header strong,
+.teacher-calendar-day-header span {
+  display: block;
+}
+
+.teacher-calendar-day-header strong {
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.teacher-calendar-slots {
+  display: grid;
+  align-content: start;
+  gap: 0.65rem;
+}
+
+.teacher-calendar-empty {
+  margin: 0;
+  font-size: 0.92rem;
+}
+
+.teacher-calendar-slot {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.7rem 0.75rem;
+  border-radius: 0.95rem;
+  border: 1px solid rgba(223, 109, 45, 0.18);
+  background: rgba(223, 109, 45, 0.08);
+}
+
+.teacher-calendar-slot strong {
+  line-height: 1.25;
+}
+
+.teacher-undated-strip {
+  margin-top: 1.2rem;
+}
+
+@media (max-width: 1100px) {
+  .teacher-calendar-weekdays,
+  .teacher-calendar-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .teacher-calendar-weekdays {
+    display: none;
+  }
+}
+
+@media (max-width: 760px) {
+  .teacher-schedule-nav {
+    align-items: stretch;
+  }
+
+  .teacher-schedule-nav > * {
+    flex: 1 1 100%;
+  }
+
+  .teacher-calendar-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .teacher-calendar-day {
+    min-height: 0;
+  }
+}
+
 .planner-cell input[type="text"] {
   width: 100%;
   padding: 0.6rem 0.7rem;
@@ -809,5 +1026,10 @@ a {
   .data-table td {
     padding-left: 0.5rem;
     padding-right: 0.5rem;
+  }
+
+  .auth-panel {
+    margin-top: 1.5rem;
+    padding: 1.25rem;
   }
 }

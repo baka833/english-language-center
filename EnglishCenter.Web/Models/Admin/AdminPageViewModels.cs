@@ -188,7 +188,7 @@ public sealed class UpdateSchedulesForm
 
 public sealed class SaveSchedulePlannerForm
 {
-    public IReadOnlyCollection<string> SelectedSlots { get; set; } = [];
+    public List<string> SelectedSlots { get; set; } = [];
 
     public Dictionary<string, string?> RoomBySlotKey { get; set; } = new();
 

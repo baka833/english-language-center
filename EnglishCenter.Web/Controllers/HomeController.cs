@@ -1,5 +1,7 @@
 using EnglishCenter.Web.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using System.Diagnostics;
 
 namespace EnglishCenter.Web.Controllers
@@ -13,11 +15,26 @@ namespace EnglishCenter.Web.Controllers
             _logger = logger;
         }
 
+        [AllowAnonymous]
         public IActionResult Index()
         {
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                if (User.IsInRole("Admin"))
+                {
+                    return RedirectToAction("Users", "Admin");
+                }
+
+                if (User.IsInRole("Teacher"))
+                {
+                    return RedirectToAction("Classes", "Teacher");
+                }
+            }
+
             return View();
         }
 
+        [AllowAnonymous]
         public IActionResult Privacy()
         {
             return View();

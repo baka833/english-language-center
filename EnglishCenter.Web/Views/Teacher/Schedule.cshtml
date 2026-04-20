@@ -1,0 +1,162 @@
+@model TeacherSchedulePageViewModel
+
+@{
+    ViewData["Title"] = "Teaching Schedule";
+
+    var weekdays = new[] { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" };
+}
+
+<section class="page-shell">
+    <div class="page-header">
+        <div>
+            <p class="eyebrow">Teacher Workspace</p>
+            <h1>Teaching Schedule</h1>
+            <p>Review your teaching plan in calendar form so each teaching day, room and time slot is easier to scan.</p>
+        </div>
+    </div>
+
+    <section class="panel-card">
+        <div class="teacher-schedule-toolbar">
+            <div>
+                <p class="eyebrow">Monthly View</p>
+                <h2 class="calendar-title">@Model.DisplayMonthYear</h2>
+            </div>
+            <div class="teacher-schedule-nav">
+                <a class="btn btn-outline-secondary" asp-action="Schedule" asp-route-month="@Model.PreviousMonth" asp-route-year="@Model.PreviousYear">Previous</a>
+                <form method="get" asp-action="Schedule" class="inline-form planner-filter-form teacher-schedule-filter">
+                    <label>
+                        <span>Month</span>
+                        <select name="month">
+                            @for (var month = 1; month <= 12; month++)
+                            {
+                                <option value="@month" selected="@(month == Model.SelectedMonth)">@month</option>
+                            }
+                        </select>
+                    </label>
+                    <label>
+                        <span>Year</span>
+                        <select name="year">
+                            @for (var year = Model.SelectedYear - 1; year <= Model.SelectedYear + 1; year++)
+                            {
+                                <option value="@year" selected="@(year == Model.SelectedYear)">@year</option>
+                            }
+                        </select>
+                    </label>
+                    <div class="action-stack">
+                        <button class="btn btn-primary" type="submit">Open</button>
+                    </div>
+                </form>
+                <a class="btn btn-outline-secondary" asp-action="Schedule" asp-route-month="@Model.NextMonth" asp-route-year="@Model.NextYear">Next</a>
+            </div>
+        </div>
+
+        <div class="teacher-schedule-stats">
+            <article>
+                <span>Total Sessions</span>
+                <strong>@Model.TotalSessions</strong>
+            </article>
+            <article>
+                <span>Teaching Days</span>
+                <strong>@Model.BusyDayCount</strong>
+            </article>
+            <article>
+                <span>Undated Entries</span>
+                <strong>@Model.UndatedSchedules.Count</strong>
+            </article>
+        </div>
+    </section>
+
+    <section class="panel-card">
+        @if (Model.Schedules.Count == 0)
+        {
+            <div class="response-box">
+                <strong>No schedule entries were found for this month.</strong>
+                <p>Try another month or check whether classes have already been assigned to this teacher.</p>
+            </div>
+        }
+        else
+        {
+            <div class="teacher-calendar-shell">
+                <div class="teacher-calendar-weekdays">
+                    @foreach (var weekday in weekdays)
+                    {
+                        <span>@weekday</span>
+                    }
+                </div>
+
+                <div class="teacher-calendar-grid">
+                    @foreach (var week in Model.CalendarWeeks)
+                    {
+                        @foreach (var day in week.Days)
+                        {
+                            var dayClasses = string.Join(" ", new[]
+                            {
+                                "teacher-calendar-day",
+                                day.IsCurrentMonth ? string.Empty : "is-outside",
+                                day.IsToday ? "is-today" : string.Empty,
+                                day.Entries.Count > 0 ? "has-sessions" : string.Empty
+                            }.Where(value => !string.IsNullOrWhiteSpace(value)));
+
+                            <article class="@dayClasses">
+                                <header class="teacher-calendar-day-header">
+                                    <div>
+                                        <strong>@day.Date.Day</strong>
+                                        <span>@day.Date.ToString("ddd")</span>
+                                    </div>
+                                    @if (day.Entries.Count > 0)
+                                    {
+                                        <span class="meta-chip">@day.Entries.Count slot(s)</span>
+                                    }
+                                </header>
+
+                                <div class="teacher-calendar-slots">
+                                    @if (day.Entries.Count == 0)
+                                    {
+                                        <p class="teacher-calendar-empty">No class</p>
+                                    }
+                                    else
+                                    {
+                                        @foreach (var item in day.Entries)
+                                        {
+                                            <article class="teacher-calendar-slot">
+                                                <strong>@item.ClassName</strong>
+                                                <span>@item.StartTime.ToString("HH:mm") - @item.EndTime.ToString("HH:mm")</span>
+                                                <small>@item.CourseName</small>
+                                                <small>Room: @(string.IsNullOrWhiteSpace(item.Room) ? "TBA" : item.Room)</small>
+                                            </article>
+                                        }
+                                    }
+                                </div>
+                            </article>
+                        }
+                    }
+                </div>
+            </div>
+
+            @if (Model.UndatedSchedules.Count > 0)
+            {
+                <div class="teacher-undated-strip">
+                    <div class="panel-heading">
+                        <div>
+                            <h2>Entries Without Specific Date</h2>
+                            <p class="muted-line">These schedule rows were returned without a concrete calendar date.</p>
+                        </div>
+                    </div>
+                    <div class="list-stack">
+                        @foreach (var item in Model.UndatedSchedules)
+                        {
+                            <article class="item-card teacher-card">
+                                <div>
+                                    <strong>@item.ClassName</strong>
+                                    <p>@item.CourseName</p>
+                                    <small class="muted-line">@item.StartTime.ToString("HH:mm") - @item.EndTime.ToString("HH:mm")</small>
+                                </div>
+                                <span class="reference-chip">Room: @(string.IsNullOrWhiteSpace(item.Room) ? "TBA" : item.Room)</span>
+                            </article>
+                        }
+                    </div>
+                </div>
+            }
+        }
+    </section>
+</section>

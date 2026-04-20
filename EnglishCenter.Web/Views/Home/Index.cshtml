@@ -1,29 +1,29 @@
 ﻿@{
-    ViewData["Title"] = "English Center Admin";
+    ViewData["Title"] = "English Center Portal";
 }
 
 <section class="hero-panel">
     <div>
-        <p class="eyebrow">English Center Control Room</p>
-        <h1>Operate courses, classes, users and approvals from one admin console.</h1>
-        <p class="hero-copy">The web client is wired to your backend API and ready for admin workflows first: user management, academic setup, class operations and application responses.</p>
+        <p class="eyebrow">English Center Portal</p>
+        <h1>Run admin and teacher workflows from one authenticated workspace.</h1>
+        <p class="hero-copy">The web client now supports role-based access with JWT-backed API calls, covering admin operations and the teacher daily workflow: assigned classes, schedule, attendance, grades and applications.</p>
         <div class="hero-actions">
-            <a class="btn btn-primary btn-lg" asp-controller="Admin" asp-action="Users">Open Admin Workspace</a>
-            <a class="btn btn-outline-secondary btn-lg" asp-controller="Admin" asp-action="Applications">Review Applications</a>
+            <a class="btn btn-primary btn-lg" asp-controller="Account" asp-action="Login">Sign in</a>
+            <a class="btn btn-outline-secondary btn-lg" asp-controller="Home" asp-action="Privacy">View Privacy</a>
         </div>
     </div>
     <div class="hero-metrics">
         <article>
-            <span>Users</span>
-            <strong>Create, lock, reset, permission</strong>
+            <span>Admin</span>
+            <strong>Users, courses, classes, approvals</strong>
         </article>
         <article>
-            <span>Classes</span>
-            <strong>Teachers, students, schedules</strong>
+            <span>Teacher</span>
+            <strong>Schedule, attendance, grades, applications</strong>
         </article>
         <article>
-            <span>Requests</span>
-            <strong>Approval queue in one place</strong>
+            <span>Security</span>
+            <strong>JWT-backed API access with role checks</strong>
         </article>
     </div>
 </section>

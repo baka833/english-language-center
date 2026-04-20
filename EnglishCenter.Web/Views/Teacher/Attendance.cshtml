@@ -1,0 +1,71 @@
+@model TeacherAttendancePageViewModel
+
+@{
+    ViewData["Title"] = "Attendance";
+    var statuses = new[] { "Present", "Absent", "Late", "Excused" };
+}
+
+<section class="page-shell">
+    <div class="page-header">
+        <div>
+            <p class="eyebrow">Teacher Workspace</p>
+            <h1>@Model.ClassName</h1>
+            <p>Take attendance for one class date. Future dates are not allowed.</p>
+        </div>
+        <div class="action-stack">
+            <a class="btn btn-outline-secondary" asp-action="Students" asp-route-classId="@Model.ClassId">Student List</a>
+            <a class="btn btn-outline-secondary" asp-action="AttendanceSummary" asp-route-classId="@Model.ClassId">Summary</a>
+        </div>
+    </div>
+
+    <form method="post" asp-action="SaveAttendance" asp-route-classId="@Model.ClassId" class="page-shell">
+        @Html.AntiForgeryToken()
+        <section class="panel-card">
+            <label class="stack-form">
+                <span>Attendance Date</span>
+                <input asp-for="Form.AttendanceDate" type="date" max="@DateTime.Today.ToString("yyyy-MM-dd")" />
+            </label>
+        </section>
+
+        <section class="panel-card">
+            <div class="table-wrap">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>Status</th>
+                            <th>Note</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (var index = 0; index < Model.Form.Records.Count; index++)
+                        {
+                            <tr>
+                                <td>
+                                    <input asp-for="Form.Records[index].StudentId" type="hidden" />
+                                    <input asp-for="Form.Records[index].StudentName" type="hidden" />
+                                    <strong>@Model.Form.Records[index].StudentName</strong>
+                                </td>
+                                <td>
+                                    <select asp-for="Form.Records[index].Status">
+                                        @foreach (var status in statuses)
+                                        {
+                                            <option value="@status">@status</option>
+                                        }
+                                    </select>
+                                </td>
+                                <td>
+                                    <input asp-for="Form.Records[index].Note" />
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <div class="action-stack">
+            <button class="btn btn-primary" type="submit">Save Attendance</button>
+        </div>
+    </form>
+</section>
