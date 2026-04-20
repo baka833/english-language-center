@@ -1,8 +1,29 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "English Center Admin";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<section class="hero-panel">
+    <div>
+        <p class="eyebrow">English Center Control Room</p>
+        <h1>Operate courses, classes, users and approvals from one admin console.</h1>
+        <p class="hero-copy">The web client is wired to your backend API and ready for admin workflows first: user management, academic setup, class operations and application responses.</p>
+        <div class="hero-actions">
+            <a class="btn btn-primary btn-lg" asp-controller="Admin" asp-action="Users">Open Admin Workspace</a>
+            <a class="btn btn-outline-secondary btn-lg" asp-controller="Admin" asp-action="Applications">Review Applications</a>
+        </div>
+    </div>
+    <div class="hero-metrics">
+        <article>
+            <span>Users</span>
+            <strong>Create, lock, reset, permission</strong>
+        </article>
+        <article>
+            <span>Classes</span>
+            <strong>Teachers, students, schedules</strong>
+        </article>
+        <article>
+            <span>Requests</span>
+            <strong>Approval queue in one place</strong>
+        </article>
+    </div>
+</section>

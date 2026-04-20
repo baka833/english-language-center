@@ -1,0 +1,68 @@
+@model ApplicationsPageViewModel
+
+@{
+    ViewData["Title"] = "Admin Applications";
+}
+
+<section class="page-shell">
+    <div class="page-header">
+        <div>
+            <p class="eyebrow">Interaction Queue</p>
+            <h1>Applications</h1>
+            <p>Review leave requests, reschedule requests and other applications from staff, teachers or students.</p>
+        </div>
+    </div>
+
+    <section class="panel-card">
+        <div class="panel-heading">
+            <h2>Filter Queue</h2>
+        </div>
+        <form method="get" asp-action="Applications" class="stack-form compact-form inline-form">
+            <label>
+                <span>Status</span>
+                <select name="status">
+                    <option value="">All</option>
+                    <option value="Pending" selected="@(Model.StatusFilter == "Pending")">Pending</option>
+                    <option value="Approved" selected="@(Model.StatusFilter == "Approved")">Approved</option>
+                    <option value="Rejected" selected="@(Model.StatusFilter == "Rejected")">Rejected</option>
+                </select>
+            </label>
+            <button class="btn btn-primary" type="submit">Filter</button>
+        </form>
+    </section>
+
+    <div class="list-stack application-list">
+    @foreach (var application in Model.Applications)
+    {
+        <article class="panel-card application-card">
+            <div class="panel-heading">
+                <div>
+                    <h2>@application.Title</h2>
+                    <p>@application.SenderName · @application.SenderRole · @application.Type</p>
+                </div>
+                <span class="status-pill @(application.Status == "Approved" ? "status-active" : application.Status == "Rejected" ? "status-danger" : "status-warn")">@application.Status</span>
+            </div>
+            <p>@application.Content</p>
+            <p class="micro-meta">Created: @application.CreatedAt?.ToString("dd/MM/yyyy HH:mm")</p>
+            <form method="post" asp-action="RespondApplication" asp-route-id="@application.AppId" class="stack-form compact-form">
+                @Html.AntiForgeryToken()
+                <div class="form-split">
+                    <label>
+                        <span>Status</span>
+                        <select name="Status">
+                            <option value="Approved">Approved</option>
+                            <option value="Rejected">Rejected</option>
+                            <option value="Pending">Pending</option>
+                        </select>
+                    </label>
+                    <label>
+                        <span>Admin Response</span>
+                        <input name="AdminResponse" value="@application.AdminResponse" />
+                    </label>
+                </div>
+                <button class="btn btn-primary" type="submit">Submit Response</button>
+            </form>
+        </article>
+    }
+    </div>
+</section>

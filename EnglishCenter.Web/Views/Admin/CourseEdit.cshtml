@@ -1,0 +1,41 @@
+@model CourseEditPageViewModel
+
+@{
+    ViewData["Title"] = "Edit Course";
+}
+
+<section class="page-shell">
+    <div class="page-header compact-header">
+        <div>
+            <p class="eyebrow">Course Detail</p>
+            <h1>@Model.Course.CourseName</h1>
+            <p>Refine the curriculum offering before opening classes.</p>
+        </div>
+        <a class="btn btn-outline-secondary" asp-action="Courses">Back to Courses</a>
+    </div>
+
+    <section class="panel-card accent-card">
+        <form method="post" asp-action="UpdateCourse" asp-route-id="@Model.Course.CourseId" class="stack-form">
+            @Html.AntiForgeryToken()
+            <label>
+                <span>Course Name</span>
+                <input asp-for="Form.CourseName" />
+            </label>
+            <label>
+                <span>Description</span>
+                <textarea asp-for="Form.Description" rows="6"></textarea>
+            </label>
+            <div class="form-split">
+                <label>
+                    <span>Price</span>
+                    <input asp-for="Form.Price" type="number" step="0.01" />
+                </label>
+                <label>
+                    <span>Total Slots</span>
+                    <input asp-for="Form.TotalSlots" type="number" />
+                </label>
+            </div>
+            <button class="btn btn-primary" type="submit">Save Course</button>
+        </form>
+    </section>
+</section>

@@ -9,6 +9,8 @@ public partial class Schedule
 
     public int ClassId { get; set; }
 
+    public DateOnly? ScheduleDate { get; set; }
+
     public int? DayOfWeek { get; set; }
 
     public TimeOnly StartTime { get; set; }

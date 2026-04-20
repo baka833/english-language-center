@@ -86,6 +86,7 @@ public partial class EnglishCenterDbContext : DbContext
             entity.HasKey(e => e.ClassId).HasName("PK__Classes__CB1927A030992EA3");
 
             entity.Property(e => e.ClassId).HasColumnName("ClassID");
+            entity.Property(e => e.AllowTeacherGradeComponentManagement).HasDefaultValue(false);
             entity.Property(e => e.ClassName).HasMaxLength(100);
             entity.Property(e => e.CourseId).HasColumnName("CourseID");
             entity.Property(e => e.Status)
@@ -177,6 +178,7 @@ public partial class EnglishCenterDbContext : DbContext
             entity.Property(e => e.ScheduleId).HasColumnName("ScheduleID");
             entity.Property(e => e.ClassId).HasColumnName("ClassID");
             entity.Property(e => e.Room).HasMaxLength(50);
+            entity.Property(e => e.ScheduleDate).HasColumnType("date");
 
             entity.HasOne(d => d.Class).WithMany(p => p.Schedules)
                 .HasForeignKey(d => d.ClassId)
@@ -189,6 +191,7 @@ public partial class EnglishCenterDbContext : DbContext
 
             entity.HasIndex(e => e.Username, "UQ__Users__536C85E4BF729CC9").IsUnique();
 
+            entity.Property(e => e.CanManageGradeComponents).HasDefaultValue(false);
             entity.Property(e => e.UserId).HasColumnName("UserID");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")

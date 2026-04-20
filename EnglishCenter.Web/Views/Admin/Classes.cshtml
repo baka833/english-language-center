@@ -1,0 +1,101 @@
+@model ClassesPageViewModel
+
+@{
+    ViewData["Title"] = "Admin Classes";
+}
+
+<section class="page-shell">
+    <div class="page-header">
+        <div>
+            <p class="eyebrow">Academic Operations</p>
+            <h1>Classes</h1>
+            <p>Open classes from existing courses, assign teachers and control grade-component permission at class level.</p>
+        </div>
+    </div>
+
+    <div class="admin-grid admin-grid-two-wide">
+        <section class="panel-card accent-card">
+            <div class="panel-heading">
+                <h2>Create Class</h2>
+            </div>
+            <form method="post" asp-action="CreateClass" class="stack-form">
+                @Html.AntiForgeryToken()
+                <label>
+                    <span>Class Name</span>
+                    <input asp-for="CreateForm.ClassName" />
+                </label>
+                <div class="form-split">
+                    <label>
+                        <span>Course</span>
+                        <select asp-for="CreateForm.CourseId">
+                            <option value="">Select course</option>
+                            @foreach (var course in Model.Courses)
+                            {
+                                <option value="@course.Id">@course.Label</option>
+                            }
+                        </select>
+                    </label>
+                    <label>
+                        <span>Teacher</span>
+                        <select asp-for="CreateForm.TeacherId">
+                            <option value="">Unassigned</option>
+                            @foreach (var teacher in Model.Teachers)
+                            {
+                                <option value="@teacher.Id">@teacher.Label (@teacher.Secondary)</option>
+                            }
+                        </select>
+                    </label>
+                </div>
+                <div class="form-split">
+                    <label>
+                        <span>Start Date</span>
+                        <input asp-for="CreateForm.StartDate" type="date" />
+                    </label>
+                    <label>
+                        <span>End Date</span>
+                        <input asp-for="CreateForm.EndDate" type="date" />
+                    </label>
+                </div>
+                <div class="form-split">
+                    <label>
+                        <span>Status</span>
+                        <input asp-for="CreateForm.Status" />
+                    </label>
+                    <label class="toggle-option standalone-toggle">
+                        <input asp-for="CreateForm.AllowTeacherGradeComponentManagement" type="checkbox" />
+                        <span>Allow teacher to manage grade components for this class</span>
+                    </label>
+                </div>
+                <button class="btn btn-primary" type="submit">Create Class</button>
+            </form>
+        </section>
+
+        <section class="panel-card">
+            <div class="panel-heading">
+                <h2>Active Classes</h2>
+                <span class="meta-chip">@Model.Classes.Count class(es)</span>
+            </div>
+            <div class="list-stack">
+            @foreach (var item in Model.Classes)
+            {
+                <article class="item-card">
+                    <div>
+                        <h3>@item.ClassName</h3>
+                        <p>@item.CourseName</p>
+                        <div class="micro-meta">Teacher: @(item.TeacherName ?? "Unassigned") · Students: @item.StudentCount · Status: @(item.Status ?? "-")</div>
+                        <div class="micro-meta">Grade permission: @(item.AllowTeacherGradeComponentManagement ? "Enabled" : "Off")</div>
+                    </div>
+                    <div class="action-stack horizontal-stack">
+                        <a class="btn btn-sm btn-outline-primary" asp-action="EditClass" asp-route-id="@item.ClassId">Manage</a>
+                        <form method="post" asp-action="DeleteClass">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@item.ClassId" />
+                            <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+                        </form>
+                    </div>
+                </article>
+            }
+            </div>
+        </section>
+    </div>
+</section>

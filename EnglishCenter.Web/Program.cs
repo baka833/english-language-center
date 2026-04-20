@@ -1,3 +1,5 @@
+using EnglishCenter.Web.Services;
+
 namespace EnglishCenter.Web
 {
     public class Program
@@ -8,6 +10,18 @@ namespace EnglishCenter.Web
 
             // Add services to the container.
             builder.Services.AddControllersWithViews();
+            builder.Services.AddHttpClient<IAdminApiClient, AdminApiClient>((serviceProvider, client) =>
+            {
+                var configuration = serviceProvider.GetRequiredService<IConfiguration>();
+                var baseUrl = configuration["ApiSettings:BaseUrl"];
+
+                if (string.IsNullOrWhiteSpace(baseUrl))
+                {
+                    throw new InvalidOperationException("ApiSettings:BaseUrl is not configured.");
+                }
+
+                client.BaseAddress = new Uri(baseUrl.EndsWith('/') ? baseUrl : $"{baseUrl}/");
+            });
 
             var app = builder.Build();
 

@@ -1,0 +1,162 @@
+@model ClassSchedulePlannerPageViewModel
+
+@{
+    ViewData["Title"] = "Schedule Planner";
+}
+
+<section class="page-shell">
+    <div class="page-header compact-header">
+        <div>
+            <p class="eyebrow">Class Planner</p>
+            <h1>@Model.Class.ClassName</h1>
+            <p>@Model.Course.CourseName · Allowed sessions: @Model.AllowedSelections · Current sessions: @Model.CurrentSelections</p>
+        </div>
+        <div class="action-stack horizontal-stack">
+            <a class="btn btn-outline-secondary" asp-action="EditClass" asp-route-id="@Model.Class.ClassId">Back to Class</a>
+            <a class="btn btn-outline-secondary" asp-action="ScheduleClass" asp-route-id="@Model.Class.ClassId" asp-route-month="@Model.PreviousMonth" asp-route-year="@Model.PreviousYear" asp-route-weekIndex="0">Previous Month</a>
+            <span class="meta-chip planner-month-chip">@Model.MonthStart.ToString("MMMM yyyy")</span>
+            <a class="btn btn-outline-secondary" asp-action="ScheduleClass" asp-route-id="@Model.Class.ClassId" asp-route-month="@Model.NextMonth" asp-route-year="@Model.NextYear" asp-route-weekIndex="0">Next Month</a>
+        </div>
+    </div>
+
+    <section class="panel-card compact-planner-toolbar">
+        <form method="get" asp-action="ScheduleClass" class="inline-form planner-filter-form">
+            <input type="hidden" name="id" value="@Model.Class.ClassId" />
+            <label>
+                <span>Month</span>
+                <select name="month">
+                    @for (var month = 1; month <= 12; month++)
+                    {
+                        <option value="@month" selected="@(month == Model.SelectedMonth)">@(new DateTime(Model.SelectedYear, month, 1).ToString("MMMM"))</option>
+                    }
+                </select>
+            </label>
+            <label>
+                <span>Year</span>
+                <select name="year">
+                    @for (var year = Model.SelectedYear - 1; year <= Model.SelectedYear + 1; year++)
+                    {
+                        <option value="@year" selected="@(year == Model.SelectedYear)">@year</option>
+                    }
+                </select>
+            </label>
+            <label>
+                <span>Week</span>
+                <select name="weekIndex">
+                    @foreach (var week in Model.WeekOptions)
+                    {
+                        <option value="@week.WeekIndex" selected="@(week.WeekIndex == Model.SelectedWeekIndex)">@week.Label</option>
+                    }
+                </select>
+            </label>
+            <button class="btn btn-primary" type="submit">Open</button>
+        </form>
+        <div class="week-chip-row">
+        @foreach (var week in Model.WeekOptions)
+        {
+            <a class="week-chip @(week.WeekIndex == Model.SelectedWeekIndex ? "is-active" : string.Empty)"
+               asp-action="ScheduleClass"
+               asp-route-id="@Model.Class.ClassId"
+               asp-route-month="@Model.SelectedMonth"
+               asp-route-year="@Model.SelectedYear"
+               asp-route-weekIndex="@week.WeekIndex">
+                @week.Label
+            </a>
+        }
+        </div>
+    </section>
+
+    <section class="panel-card accent-card">
+        <div class="panel-heading">
+            <h2>Fixed Slots</h2>
+        </div>
+        <div class="reference-strip planner-slot-strip">
+        @foreach (var slot in Model.SlotDefinitions)
+        {
+            <span class="reference-chip">@slot.Label: @slot.StartTime.ToString("HH:mm") - @slot.EndTime.ToString("HH:mm")</span>
+        }
+        </div>
+    </section>
+
+    <form method="post" asp-action="SaveClassSchedule" asp-route-id="@Model.Class.ClassId" class="page-shell">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="Month" value="@Model.MonthStart.Month" />
+        <input type="hidden" name="Year" value="@Model.MonthStart.Year" />
+        <input type="hidden" name="WeekIndex" value="@Model.SelectedWeekIndex" />
+
+        @if (!Model.CurrentWeek.Days.Any(day => day.IsInsideClassRange))
+        {
+            <section class="panel-card planner-notice-card">
+                <p>
+                    This week is outside the class date range.
+                    @if (Model.Class.StartDate.HasValue || Model.Class.EndDate.HasValue)
+                    {
+                        <span>
+                            Class range:
+                            @(Model.Class.StartDate?.ToString("dd/MM/yyyy") ?? "open") - @(Model.Class.EndDate?.ToString("dd/MM/yyyy") ?? "open")
+                        </span>
+                    }
+                    Choose another week above or update the class start and end dates.
+                </p>
+            </section>
+        }
+
+        <section class="panel-card">
+            <div class="panel-heading">
+                <h2>Session Planner</h2>
+                <span class="meta-chip">Week of @Model.CurrentWeek.StartDate.ToString("dd/MM") - @Model.CurrentWeek.EndDate.ToString("dd/MM")</span>
+            </div>
+            <div class="planner-summary-row">
+                <span class="meta-chip">Course limit: @Model.AllowedSelections session(s)</span>
+                <span class="meta-chip">Current total: @Model.CurrentSelections session(s)</span>
+            </div>
+            <div class="planner-table-wrap">
+                <table class="planner-table">
+                    <thead>
+                        <tr>
+                            <th>Slot</th>
+                            @foreach (var day in Model.CurrentWeek.Days)
+                            {
+                                <th class="@(day.IsCurrentMonth ? string.Empty : "is-outside")">@day.Date.ToString("ddd dd/MM")</th>
+                            }
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var slotDefinition in Model.SlotDefinitions)
+                    {
+                        <tr>
+                            <td class="planner-slot-label-cell">
+                                <strong>@slotDefinition.Label</strong>
+                                <small>@slotDefinition.StartTime.ToString("HH:mm") - @slotDefinition.EndTime.ToString("HH:mm")</small>
+                            </td>
+                            @foreach (var day in Model.CurrentWeek.Days)
+                            {
+                                var slot = day.Slots.First(item => item.SlotNumber == slotDefinition.SlotNumber);
+                                <td class="planner-cell @(day.IsInsideClassRange ? string.Empty : "is-disabled") @(slot.IsSelected ? "is-selected" : string.Empty)">
+                                    <label class="planner-check">
+                                        <input type="checkbox"
+                                               name="SelectedSlots"
+                                               value="@slot.Key"
+                                               checked="@slot.IsSelected"
+                                               disabled="@(!day.IsInsideClassRange)" />
+                                        <span>Select</span>
+                                    </label>
+                                    <input type="text"
+                                           name="RoomBySlotKey[@slot.Key]"
+                                           value="@slot.Room"
+                                           placeholder="Room"
+                                           disabled="@(!day.IsInsideClassRange)" />
+                                </td>
+                            }
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <div class="action-stack">
+            <button class="btn btn-primary" type="submit">Save Planner</button>
+        </div>
+    </form>
+</section>

@@ -8,37 +8,85 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/EnglishCenter.Web.styles.css" asp-append-version="true" />
 </head>
+@{
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+    var isAdminPage = string.Equals(currentController, "Admin", StringComparison.OrdinalIgnoreCase);
+}
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">EnglishCenter.Web</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+    <header class="shell-header">
+        <nav class="navbar navbar-expand-lg app-nav">
+            <div class="container-fluid app-nav-inner">
+                <a class="navbar-brand brand-lockup" asp-area="" asp-controller="Home" asp-action="Index">
+                    <span class="brand-mark">EC</span>
+                    <span>
+                        <strong>English Center</strong>
+                        <small>Admin Client</small>
+                    </span>
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#appNav" aria-controls="appNav"
                         aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
+                <div class="collapse navbar-collapse" id="appNav">
+                    <ul class="navbar-nav ms-auto app-nav-links">
+                        <li class="nav-item"><a class="nav-link" asp-area="" asp-controller="Home" asp-action="Index">Dashboard</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a></li>
                     </ul>
                 </div>
             </div>
         </nav>
     </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
+    <div class="app-shell container-fluid">
+        @if (TempData["SuccessMessage"] is string successMessage)
+        {
+            <div class="flash-banner flash-success">@successMessage</div>
+        }
+        @if (TempData["ErrorMessage"] is string errorMessage)
+        {
+            <div class="flash-banner flash-error">@errorMessage</div>
+        }
+        @if (isAdminPage)
+        {
+            <div class="workspace-shell">
+                <aside class="admin-sidebar">
+                    <div class="sidebar-block">
+                        <p class="eyebrow">Navigation</p>
+                        <a class="sidebar-link @(currentAction == "Users" || currentAction == "EditUser" ? "is-active" : null)" asp-area="" asp-controller="Admin" asp-action="Users">
+                            <strong>Users</strong>
+                            <small>Accounts, locking, reset, permissions</small>
+                        </a>
+                        <a class="sidebar-link @(currentAction == "Courses" || currentAction == "EditCourse" ? "is-active" : null)" asp-area="" asp-controller="Admin" asp-action="Courses">
+                            <strong>Courses</strong>
+                            <small>Catalog, fees, descriptions, capacity</small>
+                        </a>
+                        <a class="sidebar-link @(currentAction == "Classes" || currentAction == "EditClass" ? "is-active" : null)" asp-area="" asp-controller="Admin" asp-action="Classes">
+                            <strong>Classes</strong>
+                            <small>Teacher, students, schedules, permissions</small>
+                        </a>
+                        <a class="sidebar-link @(currentAction == "Applications" ? "is-active" : null)" asp-area="" asp-controller="Admin" asp-action="Applications">
+                            <strong>Applications</strong>
+                            <small>Pending approvals and admin responses</small>
+                        </a>
+                    </div>
+                </aside>
+                <main role="main" class="workspace-content pb-4">
+                    @RenderBody()
+                </main>
+            </div>
+        }
+        else
+        {
+            <main role="main" class="pb-4">
+                @RenderBody()
+            </main>
+        }
     </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - EnglishCenter.Web - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+    <footer class="footer text-muted">
+        <div class="container-fluid footer-inner">
+            <span>&copy; 2026 English Center</span>
+            <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
         </div>
     </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>

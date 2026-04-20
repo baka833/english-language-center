@@ -1,0 +1,67 @@
+@model UserEditPageViewModel
+
+@{
+    ViewData["Title"] = "Edit User";
+}
+
+<section class="page-shell">
+    <div class="page-header compact-header">
+        <div>
+            <p class="eyebrow">User Detail</p>
+            <h1>@Model.User.Fullname</h1>
+            <p>@Model.User.Username · @Model.User.Role</p>
+        </div>
+        <a class="btn btn-outline-secondary" asp-action="Users">Back to Users</a>
+    </div>
+
+    <section class="panel-card accent-card">
+        <div class="panel-heading">
+            <h2>Edit Account</h2>
+            <span class="meta-chip">Created @Model.User.CreatedAt?.ToString("dd/MM/yyyy")</span>
+        </div>
+        <form method="post" asp-action="UpdateUser" asp-route-id="@Model.User.UserId" class="stack-form">
+            @Html.AntiForgeryToken()
+            <div class="form-split">
+                <label>
+                    <span>Full Name</span>
+                    <input asp-for="Form.Fullname" />
+                </label>
+                <label>
+                    <span>Email</span>
+                    <input asp-for="Form.Email" type="email" />
+                </label>
+            </div>
+            <div class="form-split">
+                <label>
+                    <span>Gender</span>
+                    <input asp-for="Form.Gender" />
+                </label>
+                <label>
+                    <span>Date of Birth</span>
+                    <input asp-for="Form.Dob" type="date" />
+                </label>
+            </div>
+            <div class="form-split">
+                <label>
+                    <span>Role</span>
+                    <select asp-for="Form.Role">
+                        <option value="Teacher">Teacher</option>
+                        <option value="Student">Student</option>
+                        <option value="Staff">Staff</option>
+                    </select>
+                </label>
+                <div class="toggle-cluster">
+                    <label class="toggle-option">
+                        <input asp-for="Form.IsActive" type="checkbox" />
+                        <span>Active</span>
+                    </label>
+                    <label class="toggle-option">
+                        <input asp-for="Form.CanManageGradeComponents" type="checkbox" />
+                        <span>Allow grade component management</span>
+                    </label>
+                </div>
+            </div>
+            <button class="btn btn-primary" type="submit">Save User</button>
+        </form>
+    </section>
+</section>
