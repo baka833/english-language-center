@@ -33,14 +33,18 @@ public partial class EnglishCenterDbContext : DbContext
 
     public virtual DbSet<User> Users { get; set; }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        => optionsBuilder.UseSqlServer("Name=ConnectionStrings:MyCnn");
+
+    //protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    //    => optionsBuilder.UseSqlServer("Name=ConnectionStrings:MyCnn");
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Application>(entity =>
         {
-            entity.HasKey(e => e.AppId).HasName("PK__Applicat__8E2CF7D93CDFB4CA");
+
+            entity.HasKey(e => e.AppId).HasName("PK__Applicat__8E2CF7D920388ACA");
+
 
             entity.Property(e => e.AppId).HasColumnName("AppID");
             entity.Property(e => e.CreatedAt)
@@ -61,7 +65,9 @@ public partial class EnglishCenterDbContext : DbContext
 
         modelBuilder.Entity<Attendance>(entity =>
         {
-            entity.HasKey(e => e.AttendanceId).HasName("PK__Attendan__8B69263C7FBE66A7");
+
+            entity.HasKey(e => e.AttendanceId).HasName("PK__Attendan__8B69263CC594F00F");
+
 
             entity.ToTable("Attendance");
 
@@ -83,10 +89,12 @@ public partial class EnglishCenterDbContext : DbContext
 
         modelBuilder.Entity<Class>(entity =>
         {
-            entity.HasKey(e => e.ClassId).HasName("PK__Classes__CB1927A030992EA3");
+
+            entity.HasKey(e => e.ClassId).HasName("PK__Classes__CB1927A0E355C4EC");
 
             entity.Property(e => e.ClassId).HasColumnName("ClassID");
             entity.Property(e => e.AllowTeacherGradeComponentManagement).HasDefaultValue(false);
+
             entity.Property(e => e.ClassName).HasMaxLength(100);
             entity.Property(e => e.CourseId).HasColumnName("CourseID");
             entity.Property(e => e.Status)
@@ -106,7 +114,9 @@ public partial class EnglishCenterDbContext : DbContext
 
         modelBuilder.Entity<ClassStudent>(entity =>
         {
+
             entity.HasKey(e => new { e.ClassId, e.StudentId }).HasName("PK__Class_St__4835750767D4CC81");
+
 
             entity.ToTable("Class_Students");
 
@@ -128,7 +138,9 @@ public partial class EnglishCenterDbContext : DbContext
 
         modelBuilder.Entity<Course>(entity =>
         {
+
             entity.HasKey(e => e.CourseId).HasName("PK__Courses__C92D71874E3E3CD5");
+
 
             entity.Property(e => e.CourseId).HasColumnName("CourseID");
             entity.Property(e => e.CourseName).HasMaxLength(200);
@@ -137,7 +149,11 @@ public partial class EnglishCenterDbContext : DbContext
 
         modelBuilder.Entity<Grade>(entity =>
         {
-            entity.HasKey(e => e.GradeId).HasName("PK__Grades__54F87A37CE3B3F25");
+
+           
+
+            entity.HasKey(e => e.GradeId).HasName("PK__Grades__54F87A37EC48CC36");
+
 
             entity.Property(e => e.GradeId).HasColumnName("GradeID");
             entity.Property(e => e.ComponentId).HasColumnName("ComponentID");
@@ -159,7 +175,9 @@ public partial class EnglishCenterDbContext : DbContext
 
         modelBuilder.Entity<GradeComponent>(entity =>
         {
-            entity.HasKey(e => e.ComponentId).HasName("PK__GradeCom__D79CF02ED562A824");
+
+            entity.HasKey(e => e.ComponentId).HasName("PK__GradeCom__D79CF02E13E25EE0");
+
 
             entity.Property(e => e.ComponentId).HasColumnName("ComponentID");
             entity.Property(e => e.ClassId).HasColumnName("ClassID");
@@ -173,12 +191,17 @@ public partial class EnglishCenterDbContext : DbContext
 
         modelBuilder.Entity<Schedule>(entity =>
         {
-            entity.HasKey(e => e.ScheduleId).HasName("PK__Schedule__9C8A5B699ED89298");
+
+            entity.HasKey(e => e.ScheduleId).HasName("PK__Schedule__9C8A5B69382566B3");
+
 
             entity.Property(e => e.ScheduleId).HasColumnName("ScheduleID");
             entity.Property(e => e.ClassId).HasColumnName("ClassID");
             entity.Property(e => e.Room).HasMaxLength(50);
+
             entity.Property(e => e.ScheduleDate).HasColumnType("date");
+
+
 
             entity.HasOne(d => d.Class).WithMany(p => p.Schedules)
                 .HasForeignKey(d => d.ClassId)
@@ -187,11 +210,13 @@ public partial class EnglishCenterDbContext : DbContext
 
         modelBuilder.Entity<User>(entity =>
         {
+
             entity.HasKey(e => e.UserId).HasName("PK__Users__1788CCAC549449AF");
 
             entity.HasIndex(e => e.Username, "UQ__Users__536C85E4BF729CC9").IsUnique();
 
             entity.Property(e => e.CanManageGradeComponents).HasDefaultValue(false);
+
             entity.Property(e => e.UserId).HasColumnName("UserID");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")

@@ -19,7 +19,10 @@ public partial class Class
 
     public string? Status { get; set; }
 
+
     public bool? AllowTeacherGradeComponentManagement { get; set; }
+
+
 
     public virtual ICollection<Attendance> Attendances { get; set; } = new List<Attendance>();
 
