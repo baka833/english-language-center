@@ -23,11 +23,6 @@ public partial class Class
     public bool? AllowTeacherGradeComponentManagement { get; set; }
 
 
-
-    public virtual ICollection<Attendance> Attendances { get; set; } = new List<Attendance>();
-
-    public virtual ICollection<TeacherCheckIn> TeacherCheckIns { get; set; } = new List<TeacherCheckIn>();
-
     public virtual ICollection<ClassStudent> ClassStudents { get; set; } = new List<ClassStudent>();
 
     public virtual Course Course { get; set; } = null!;

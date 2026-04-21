@@ -26,7 +26,6 @@ BEGIN
     (
         CheckInID int IDENTITY(1,1) NOT NULL CONSTRAINT PK_TeacherCheckIn PRIMARY KEY,
         TeacherID int NOT NULL,
-        ClassID int NOT NULL,
         ScheduleID int NOT NULL,
         AttendanceDate date NOT NULL,
         CheckedInAt datetime NOT NULL CONSTRAINT DF_TeacherCheckIns_CheckedInAt DEFAULT (GETUTCDATE())
@@ -37,12 +36,12 @@ GO
 IF NOT EXISTS (
     SELECT 1
     FROM sys.indexes
-    WHERE name = 'UX_TeacherCheckIns_Teacher_Class_Schedule_Date'
+    WHERE name = 'UX_TeacherCheckIns_Teacher_Schedule_Date'
       AND object_id = OBJECT_ID('dbo.TeacherCheckIns')
 )
 BEGIN
-    CREATE UNIQUE INDEX UX_TeacherCheckIns_Teacher_Class_Schedule_Date
-        ON dbo.TeacherCheckIns (TeacherID, ClassID, ScheduleID, AttendanceDate);
+    CREATE UNIQUE INDEX UX_TeacherCheckIns_Teacher_Schedule_Date
+        ON dbo.TeacherCheckIns (TeacherID, ScheduleID, AttendanceDate);
 END
 GO
 
@@ -56,19 +55,6 @@ BEGIN
     ALTER TABLE dbo.TeacherCheckIns WITH CHECK
     ADD CONSTRAINT FK_TeacherCheckIn_Teacher
         FOREIGN KEY (TeacherID) REFERENCES dbo.Users(UserID);
-END
-GO
-
-IF NOT EXISTS (
-    SELECT 1
-    FROM sys.foreign_keys
-    WHERE name = 'FK_TeacherCheckIn_Class'
-      AND parent_object_id = OBJECT_ID('dbo.TeacherCheckIns')
-)
-BEGIN
-    ALTER TABLE dbo.TeacherCheckIns WITH CHECK
-    ADD CONSTRAINT FK_TeacherCheckIn_Class
-        FOREIGN KEY (ClassID) REFERENCES dbo.Classes(ClassID);
 END
 GO
 

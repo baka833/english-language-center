@@ -88,7 +88,7 @@ public sealed class AttendanceRecordItem
 {
     public int? AttendanceId { get; set; }
 
-    public int? ScheduleId { get; set; }
+    public int ScheduleId { get; set; }
 
     public int StudentId { get; set; }
 

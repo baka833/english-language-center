@@ -211,7 +211,7 @@ REFERENCES [dbo].[Users] ([UserID])
 ALTER TABLE [dbo].[Grades] CHECK CONSTRAINT [FK_Grades_Student]
 ALTER TABLE [dbo].[Users]  WITH CHECK ADD CHECK  (([Role]='Student' OR [Role]='Teacher' OR [Role]='Admin'))
 ALTER TABLE [dbo].[Applications]  WITH CHECK ADD CHECK  (([Status]='Rejected' OR [Status]='Approved' OR [Status]='Pending'))
-ALTER TABLE [dbo].[Attendance]  WITH CHECK ADD CHECK  (([Status]='Late' OR [Status]='Absent' OR [Status]='Present'))
+ALTER TABLE [dbo].[Attendance]  WITH CHECK ADD CHECK  (([Status]='Late' OR [Status]='Absent' OR [Status]='Present' OR [Status]='Excused'))
 ALTER TABLE [dbo].[Schedules]  WITH CHECK ADD CHECK  (([DayOfWeek]>=(2) AND [DayOfWeek]<=(8)))
 ALTER TABLE [dbo].[Grades]  WITH CHECK ADD CHECK  (([GradeValue]>=(0) AND [GradeValue]<=(10)))
 SET IDENTITY_INSERT [dbo].[Users] ON

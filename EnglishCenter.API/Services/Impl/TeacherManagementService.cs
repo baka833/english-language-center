@@ -116,19 +116,16 @@ public sealed class TeacherManagementService : ITeacherManagementService
         var scheduleIds = schedules.Select(item => item.ScheduleId).ToArray();
         var checkIns = await _dbContext.TeacherCheckIns.AsNoTracking()
             .Where(item => item.TeacherId == teacherId
-                && item.ClassId == classId
                 && item.AttendanceDate == attendanceDate
                 && scheduleIds.Contains(item.ScheduleId))
             .ToListAsync(cancellationToken);
         var checkInLookup = checkIns.ToDictionary(item => item.ScheduleId);
 
         var attendanceCounts = await _dbContext.Attendances.AsNoTracking()
-            .Where(item => item.ClassId == classId
-                && item.AttendanceDate == attendanceDate
-                && item.ScheduleId.HasValue
-                && scheduleIds.Contains(item.ScheduleId.Value)
+            .Where(item => item.AttendanceDate == attendanceDate
+                && scheduleIds.Contains(item.ScheduleId)
                 && !string.IsNullOrWhiteSpace(item.Status))
-            .GroupBy(item => item.ScheduleId!.Value)
+            .GroupBy(item => item.ScheduleId)
             .Select(item => new { ScheduleId = item.Key, Count = item.Count() })
             .ToListAsync(cancellationToken);
         var attendanceLookup = attendanceCounts.ToDictionary(item => item.ScheduleId, item => item.Count);
@@ -166,7 +163,6 @@ public sealed class TeacherManagementService : ITeacherManagementService
         var schedule = await EnsureValidAttendanceSlotAsync(classId, request.ScheduleId, request.AttendanceDate, cancellationToken);
         var checkIn = await _dbContext.TeacherCheckIns
             .FirstOrDefaultAsync(item => item.TeacherId == teacherId
-                && item.ClassId == classId
                 && item.ScheduleId == request.ScheduleId
                 && item.AttendanceDate == request.AttendanceDate, cancellationToken);
 
@@ -175,7 +171,6 @@ public sealed class TeacherManagementService : ITeacherManagementService
             checkIn = new TeacherCheckIn
             {
                 TeacherId = teacherId,
-                ClassId = classId,
                 ScheduleId = request.ScheduleId,
                 AttendanceDate = request.AttendanceDate,
                 CheckedInAt = DateTime.UtcNow
@@ -186,8 +181,7 @@ public sealed class TeacherManagementService : ITeacherManagementService
         }
 
         var recordedStudents = await _dbContext.Attendances.AsNoTracking()
-            .Where(item => item.ClassId == classId
-                && item.AttendanceDate == request.AttendanceDate
+            .Where(item => item.AttendanceDate == request.AttendanceDate
                 && item.ScheduleId == request.ScheduleId
                 && !string.IsNullOrWhiteSpace(item.Status))
             .CountAsync(cancellationToken);
@@ -232,7 +226,6 @@ public sealed class TeacherManagementService : ITeacherManagementService
 
         var hasCheckIn = await _dbContext.TeacherCheckIns.AsNoTracking()
             .AnyAsync(item => item.TeacherId == teacherId
-                && item.ClassId == classId
                 && item.ScheduleId == request.ScheduleId
                 && item.AttendanceDate == request.AttendanceDate, cancellationToken);
 
@@ -263,8 +256,7 @@ public sealed class TeacherManagementService : ITeacherManagementService
         }
 
         var existingRecords = await _dbContext.Attendances
-            .Where(item => item.ClassId == classId
-                && item.AttendanceDate == request.AttendanceDate
+            .Where(item => item.AttendanceDate == request.AttendanceDate
                 && item.ScheduleId == request.ScheduleId
                 && distinctStudentIds.Contains(item.StudentId))
             .ToListAsync(cancellationToken);
@@ -282,7 +274,6 @@ public sealed class TeacherManagementService : ITeacherManagementService
 
             _dbContext.Attendances.Add(new Attendance
             {
-                ClassId = classId,
                 ScheduleId = request.ScheduleId,
                 StudentId = record.StudentId,
                 AttendanceDate = request.AttendanceDate,
@@ -312,12 +303,17 @@ public sealed class TeacherManagementService : ITeacherManagementService
             return null;
         }
 
-        var attendanceRecords = await _dbContext.Attendances.AsNoTracking()
+        var classScheduleIds = await _dbContext.Schedules.AsNoTracking()
             .Where(item => item.ClassId == classId)
+            .Select(item => item.ScheduleId)
+            .ToListAsync(cancellationToken);
+
+        var attendanceRecords = await _dbContext.Attendances.AsNoTracking()
+            .Where(item => classScheduleIds.Contains(item.ScheduleId))
             .ToListAsync(cancellationToken);
 
         var totalSessions = attendanceRecords
-            .Select(item => item.AttendanceDate)
+            .Select(item => new { item.ScheduleId, item.AttendanceDate })
             .Distinct()
             .Count();
 
@@ -697,8 +693,7 @@ public sealed class TeacherManagementService : ITeacherManagementService
             .ToListAsync(cancellationToken);
 
         var attendances = await _dbContext.Attendances.AsNoTracking()
-            .Where(item => item.ClassId == classId
-                && item.AttendanceDate == attendanceDate
+            .Where(item => item.AttendanceDate == attendanceDate
                 && item.ScheduleId == scheduleId)
             .ToListAsync(cancellationToken);
 

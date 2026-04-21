@@ -1,5 +1,4 @@
 using System.Globalization;
-using System.Security.Claims;
 using EnglishCenter.Web.Models.Teacher;
 using EnglishCenter.Web.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -20,7 +19,7 @@ public sealed class TeacherController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> Index()
+    public IActionResult Index()
     {
         return RedirectToAction(nameof(Classes));
     }
@@ -32,7 +31,7 @@ public sealed class TeacherController : Controller
         {
             return View(new TeacherClassesPageViewModel
             {
-                Classes = await _teacherApiClient.GetAssignedClassesAsync(GetCurrentTeacherId(), cancellationToken)
+                Classes = await _teacherApiClient.GetAssignedClassesAsync(cancellationToken)
             });
         }
         catch (Exception exception)
@@ -52,7 +51,7 @@ public sealed class TeacherController : Controller
 
         try
         {
-            var schedules = await _teacherApiClient.GetScheduleAsync(GetCurrentTeacherId(), null, null, resolvedMonth, resolvedYear, cancellationToken);
+            var schedules = await _teacherApiClient.GetScheduleAsync(null, null, resolvedMonth, resolvedYear, cancellationToken);
             return View(BuildSchedulePageViewModel(resolvedMonth, resolvedYear, schedules));
         }
         catch (Exception exception)
@@ -68,7 +67,7 @@ public sealed class TeacherController : Controller
     {
         try
         {
-            var classes = await _teacherApiClient.GetAssignedClassesAsync(GetCurrentTeacherId(), cancellationToken);
+            var classes = await _teacherApiClient.GetAssignedClassesAsync(cancellationToken);
             var classItem = classes.FirstOrDefault(item => item.ClassId == classId);
             if (classItem is null)
             {
@@ -76,7 +75,7 @@ public sealed class TeacherController : Controller
                 return RedirectToAction(nameof(Classes));
             }
 
-            var students = await _teacherApiClient.GetStudentsByClassAsync(GetCurrentTeacherId(), classId, cancellationToken);
+            var students = await _teacherApiClient.GetStudentsByClassAsync(classId, cancellationToken);
             if (students is null)
             {
                 TempData["ErrorMessage"] = "Class was not found.";
@@ -112,7 +111,7 @@ public sealed class TeacherController : Controller
                 return RedirectToAction(nameof(Classes));
             }
 
-            var slots = await _teacherApiClient.GetAttendanceSlotsAsync(GetCurrentTeacherId(), classId, resolvedDate, cancellationToken);
+            var slots = await _teacherApiClient.GetAttendanceSlotsAsync(classId, resolvedDate, cancellationToken);
             if (slots is null)
             {
                 TempData["ErrorMessage"] = "Class was not found.";
@@ -125,7 +124,7 @@ public sealed class TeacherController : Controller
                 : null;
             var records = selectedSlot is null
                 ? []
-                : await _teacherApiClient.GetAttendanceByDateAsync(GetCurrentTeacherId(), classId, resolvedDate, selectedSlot.ScheduleId, cancellationToken) ?? [];
+                : await _teacherApiClient.GetAttendanceByDateAsync(classId, resolvedDate, selectedSlot.ScheduleId, cancellationToken) ?? [];
 
             return View(new TeacherAttendancePageViewModel
             {
@@ -169,7 +168,7 @@ public sealed class TeacherController : Controller
                 throw new ArgumentException("Please select a slot before checking in.");
             }
 
-            var slot = await _teacherApiClient.CheckInAttendanceSlotAsync(GetCurrentTeacherId(), classId, new TeacherAttendanceCheckInRequestModel
+            var slot = await _teacherApiClient.CheckInAttendanceSlotAsync(classId, new TeacherAttendanceCheckInRequestModel
             {
                 AttendanceDate = attendanceDate,
                 ScheduleId = form.ScheduleId
@@ -202,7 +201,7 @@ public sealed class TeacherController : Controller
                 Note = item.Note
             }).ToList();
 
-            var result = await _teacherApiClient.UpsertAttendanceAsync(GetCurrentTeacherId(), classId, new UpsertAttendanceRequestModel
+            var result = await _teacherApiClient.UpsertAttendanceAsync(classId, new UpsertAttendanceRequestModel
             {
                 AttendanceDate = attendanceDate,
                 ScheduleId = form.ScheduleId,
@@ -225,7 +224,7 @@ public sealed class TeacherController : Controller
     {
         try
         {
-            var summary = await _teacherApiClient.GetAttendanceSummaryAsync(GetCurrentTeacherId(), classId, cancellationToken);
+            var summary = await _teacherApiClient.GetAttendanceSummaryAsync(classId, cancellationToken);
             if (summary is null)
             {
                 TempData["ErrorMessage"] = "Class was not found.";
@@ -254,7 +253,7 @@ public sealed class TeacherController : Controller
                 return RedirectToAction(nameof(Classes));
             }
 
-            var components = await _teacherApiClient.GetGradeComponentsAsync(GetCurrentTeacherId(), classId, cancellationToken);
+            var components = await _teacherApiClient.GetGradeComponentsAsync(classId, cancellationToken);
             if (components is null)
             {
                 TempData["ErrorMessage"] = "Class was not found.";
@@ -283,7 +282,7 @@ public sealed class TeacherController : Controller
     {
         try
         {
-            var component = await _teacherApiClient.CreateGradeComponentAsync(GetCurrentTeacherId(), classId, new UpsertGradeComponentRequestModel
+            var component = await _teacherApiClient.CreateGradeComponentAsync(classId, new UpsertGradeComponentRequestModel
             {
                 ComponentName = form.ComponentName,
                 Weight = form.Weight
@@ -306,7 +305,7 @@ public sealed class TeacherController : Controller
     {
         try
         {
-            var component = await _teacherApiClient.UpdateGradeComponentAsync(GetCurrentTeacherId(), classId, componentId, new UpsertGradeComponentRequestModel
+            var component = await _teacherApiClient.UpdateGradeComponentAsync(classId, componentId, new UpsertGradeComponentRequestModel
             {
                 ComponentName = form.ComponentName,
                 Weight = form.Weight
@@ -329,7 +328,7 @@ public sealed class TeacherController : Controller
     {
         try
         {
-            var deleted = await _teacherApiClient.DeleteGradeComponentAsync(GetCurrentTeacherId(), classId, componentId, cancellationToken);
+            var deleted = await _teacherApiClient.DeleteGradeComponentAsync(classId, componentId, cancellationToken);
             TempData[deleted ? "SuccessMessage" : "ErrorMessage"] = deleted ? "Grade component deleted." : "Component was not found.";
         }
         catch (Exception exception)
@@ -353,7 +352,7 @@ public sealed class TeacherController : Controller
                 return RedirectToAction(nameof(Classes));
             }
 
-            var grades = await _teacherApiClient.GetGradesAsync(GetCurrentTeacherId(), classId, componentId, cancellationToken);
+            var grades = await _teacherApiClient.GetGradesAsync(classId, componentId, cancellationToken);
             if (grades is null)
             {
                 TempData["ErrorMessage"] = "Grade component was not found.";
@@ -396,7 +395,7 @@ public sealed class TeacherController : Controller
         {
             foreach (var entry in form.Entries)
             {
-                await _teacherApiClient.UpsertGradeAsync(GetCurrentTeacherId(), classId, componentId, new UpsertGradeRequestModel
+                await _teacherApiClient.UpsertGradeAsync(classId, componentId, new UpsertGradeRequestModel
                 {
                     StudentId = entry.StudentId,
                     GradeValue = entry.GradeValue,
@@ -423,7 +422,7 @@ public sealed class TeacherController : Controller
             return View(new TeacherApplicationsPageViewModel
             {
                 CreateForm = new TeacherApplicationForm { Type = "Leave" },
-                Applications = await _teacherApiClient.GetApplicationsAsync(GetCurrentTeacherId(), cancellationToken)
+                Applications = await _teacherApiClient.GetApplicationsAsync(cancellationToken)
             });
         }
         catch (Exception exception)
@@ -440,7 +439,7 @@ public sealed class TeacherController : Controller
     {
         try
         {
-            await _teacherApiClient.CreateApplicationAsync(GetCurrentTeacherId(), new CreateTeacherApplicationRequestModel
+            await _teacherApiClient.CreateApplicationAsync(new CreateTeacherApplicationRequestModel
             {
                 Title = form.Title,
                 Type = form.Type,
@@ -458,20 +457,9 @@ public sealed class TeacherController : Controller
         return RedirectToAction(nameof(Applications));
     }
 
-    private int GetCurrentTeacherId()
-    {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (!int.TryParse(userId, out var teacherId))
-        {
-            throw new InvalidOperationException("Authenticated user id was not found.");
-        }
-
-        return teacherId;
-    }
-
     private async Task<TeacherAssignedClassItem?> GetAssignedClassAsync(int classId, CancellationToken cancellationToken)
     {
-        var classes = await _teacherApiClient.GetAssignedClassesAsync(GetCurrentTeacherId(), cancellationToken);
+        var classes = await _teacherApiClient.GetAssignedClassesAsync(cancellationToken);
         return classes.FirstOrDefault(item => item.ClassId == classId);
     }
 

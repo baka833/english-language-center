@@ -6,8 +6,6 @@ public partial class TeacherCheckIn
 
     public int TeacherId { get; set; }
 
-    public int ClassId { get; set; }
-
     public int ScheduleId { get; set; }
 
     public DateOnly AttendanceDate { get; set; }
@@ -15,8 +13,6 @@ public partial class TeacherCheckIn
     public DateTime CheckedInAt { get; set; }
 
     public virtual User Teacher { get; set; } = null!;
-
-    public virtual Class Class { get; set; } = null!;
 
     public virtual Schedule Schedule { get; set; } = null!;
 }
