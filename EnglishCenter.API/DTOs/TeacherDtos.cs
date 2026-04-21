@@ -73,6 +73,8 @@ public sealed class AttendanceRecordDto
 {
     public int? AttendanceId { get; set; }
 
+    public int ScheduleId { get; set; }
+
     public int StudentId { get; set; }
 
     public string StudentName { get; set; } = string.Empty;
@@ -97,7 +99,37 @@ public sealed class UpsertAttendanceRequest
 {
     public DateOnly AttendanceDate { get; set; }
 
+    public int ScheduleId { get; set; }
+
     public IReadOnlyCollection<UpsertAttendanceItemRequest> Records { get; set; } = [];
+}
+
+public sealed class AttendanceSlotDto
+{
+    public int ScheduleId { get; set; }
+
+    public DateOnly? ScheduleDate { get; set; }
+
+    public int? DayOfWeek { get; set; }
+
+    public TimeOnly StartTime { get; set; }
+
+    public TimeOnly EndTime { get; set; }
+
+    public string? Room { get; set; }
+
+    public bool IsCheckedIn { get; set; }
+
+    public DateTime? CheckedInAt { get; set; }
+
+    public int RecordedStudents { get; set; }
+}
+
+public sealed class TeacherAttendanceCheckInRequest
+{
+    public DateOnly AttendanceDate { get; set; }
+
+    public int ScheduleId { get; set; }
 }
 
 public sealed class AttendanceSummaryDto

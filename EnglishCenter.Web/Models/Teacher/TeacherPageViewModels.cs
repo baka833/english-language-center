@@ -63,12 +63,22 @@ public sealed class TeacherAttendancePageViewModel
 
     public string ClassName { get; set; } = string.Empty;
 
+    public int? SelectedScheduleId { get; set; }
+
+    public bool IsCheckedIn { get; set; }
+
+    public DateTime? CheckedInAt { get; set; }
+
+    public IReadOnlyCollection<AttendanceSlotItem> Slots { get; set; } = [];
+
     public TeacherAttendanceForm Form { get; set; } = new();
 }
 
 public sealed class TeacherAttendanceForm
 {
     public string AttendanceDate { get; set; } = string.Empty;
+
+    public int ScheduleId { get; set; }
 
     public List<TeacherAttendanceRecordForm> Records { get; set; } = [];
 }

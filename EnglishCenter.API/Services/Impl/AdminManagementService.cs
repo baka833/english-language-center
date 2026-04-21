@@ -22,8 +22,7 @@ public sealed class AdminManagementService : IAdminManagementService
     private static readonly HashSet<string> ManageableRoles = new(StringComparer.OrdinalIgnoreCase)
     {
         "Teacher",
-        "Student",
-        "Staff"
+        "Student"
     };
 
     private static readonly HashSet<string> ApplicationStatuses = new(StringComparer.OrdinalIgnoreCase)
@@ -332,10 +331,12 @@ public sealed class AdminManagementService : IAdminManagementService
 
     public async Task<bool> DeleteClassAsync(int classId, CancellationToken cancellationToken = default)
     {
+        var hasAttendance = await _dbContext.Attendances.AsNoTracking()
+            .AnyAsync(item => item.Schedule != null && item.Schedule.ClassId == classId, cancellationToken);
+
         var classEntity = await _dbContext.Classes
             .Include(item => item.ClassStudents)
             .Include(item => item.Schedules)
-            .Include(item => item.Attendances)
             .Include(item => item.GradeComponents)
             .FirstOrDefaultAsync(item => item.ClassId == classId, cancellationToken);
 
@@ -344,7 +345,7 @@ public sealed class AdminManagementService : IAdminManagementService
             return false;
         }
 
-        if (classEntity.ClassStudents.Count > 0 || classEntity.Schedules.Count > 0 || classEntity.Attendances.Count > 0 || classEntity.GradeComponents.Count > 0)
+        if (classEntity.ClassStudents.Count > 0 || classEntity.Schedules.Count > 0 || hasAttendance || classEntity.GradeComponents.Count > 0)
         {
             throw new InvalidOperationException("Cannot delete a class that already has related schedules, students, attendance or grades.");
         }
@@ -922,7 +923,7 @@ public sealed class AdminManagementService : IAdminManagementService
     {
         if (string.IsNullOrWhiteSpace(role) || !ManageableRoles.Contains(role.Trim()))
         {
-            throw new ArgumentException("Role must be one of: Teacher, Student, Staff.");
+            throw new ArgumentException("Role must be one of: Teacher, Student.");
         }
     }
 
@@ -1075,7 +1076,6 @@ public sealed class AdminManagementService : IAdminManagementService
         {
             var value when value.Equals("Teacher", StringComparison.OrdinalIgnoreCase) => "Teacher",
             var value when value.Equals("Student", StringComparison.OrdinalIgnoreCase) => "Student",
-            var value when value.Equals("Staff", StringComparison.OrdinalIgnoreCase) => "Staff",
             _ => role.Trim()
         };
     }

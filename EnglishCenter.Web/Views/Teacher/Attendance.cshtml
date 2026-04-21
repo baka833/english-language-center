@@ -3,6 +3,9 @@
 @{
     ViewData["Title"] = "Attendance";
     var statuses = new[] { "Present", "Absent", "Late", "Excused" };
+    var selectedSlot = Model.SelectedScheduleId.HasValue
+        ? Model.Slots.FirstOrDefault(item => item.ScheduleId == Model.SelectedScheduleId.Value)
+        : null;
 }
 
 <section class="page-shell">
@@ -18,14 +21,82 @@
         </div>
     </div>
 
+    <section class="panel-card">
+        <form method="get" asp-action="Attendance" class="inline-form planner-filter-form attendance-toolbar-form">
+            <input type="hidden" name="classId" value="@Model.ClassId" />
+            <label>
+                <span>Attendance Date</span>
+                <input name="attendanceDate" type="date" value="@Model.Form.AttendanceDate" max="@DateTime.Today.ToString("yyyy-MM-dd")" />
+            </label>
+            <label>
+                <span>Slot</span>
+                <select name="scheduleId">
+                    @if (Model.Slots.Count == 0)
+                    {
+                        <option value="">No slot available</option>
+                    }
+                    else
+                    {
+                        @foreach (var slot in Model.Slots)
+                        {
+                            <option value="@slot.ScheduleId" selected="@(slot.ScheduleId == Model.SelectedScheduleId)">
+                                @slot.StartTime.ToString("HH:mm") - @slot.EndTime.ToString("HH:mm") | Room @(string.IsNullOrWhiteSpace(slot.Room) ? "TBA" : slot.Room)
+                            </option>
+                        }
+                    }
+                </select>
+            </label>
+            <div class="action-stack">
+                <button class="btn btn-primary" type="submit">Open Slot</button>
+            </div>
+        </form>
+    </section>
+
+    <section class="panel-card">
+        @if (Model.Slots.Count == 0)
+        {
+            <div class="response-box">
+                <strong>No teaching slot was found for this class on the selected date.</strong>
+                <p>Please choose another date that has an assigned schedule.</p>
+            </div>
+        }
+        else if (selectedSlot is null)
+        {
+            <div class="response-box">
+                <strong>Please select a slot to continue.</strong>
+            </div>
+        }
+        else
+        {
+            <div class="teacher-checkin-panel">
+                <div>
+                    <p class="eyebrow">Attendance Slot</p>
+                    <h2>@selectedSlot.StartTime.ToString("HH:mm") - @selectedSlot.EndTime.ToString("HH:mm")</h2>
+                    <p class="muted-line">Room: @(string.IsNullOrWhiteSpace(selectedSlot.Room) ? "TBA" : selectedSlot.Room)</p>
+                </div>
+                <div class="action-stack">
+                    @if (Model.IsCheckedIn)
+                    {
+                        <span class="status-pill status-active">Checked in @Model.CheckedInAt?.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span>
+                    }
+                    else
+                    {
+                        <form method="post" asp-action="CheckInAttendance" asp-route-classId="@Model.ClassId">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="Form.AttendanceDate" value="@Model.Form.AttendanceDate" />
+                            <input type="hidden" name="Form.ScheduleId" value="@selectedSlot.ScheduleId" />
+                            <button class="btn btn-warning" type="submit">Check In Before Attendance</button>
+                        </form>
+                    }
+                </div>
+            </div>
+        }
+    </section>
+
     <form method="post" asp-action="SaveAttendance" asp-route-classId="@Model.ClassId" class="page-shell">
         @Html.AntiForgeryToken()
-        <section class="panel-card">
-            <label class="stack-form">
-                <span>Attendance Date</span>
-                <input asp-for="Form.AttendanceDate" type="date" max="@DateTime.Today.ToString("yyyy-MM-dd")" />
-            </label>
-        </section>
+        <input asp-for="Form.AttendanceDate" type="hidden" />
+        <input asp-for="Form.ScheduleId" type="hidden" />
 
         <section class="panel-card">
             <div class="table-wrap">
@@ -65,7 +136,65 @@
         </section>
 
         <div class="action-stack">
-            <button class="btn btn-primary" type="submit">Save Attendance</button>
+            <button class="btn btn-primary" type="submit" disabled="@(!Model.IsCheckedIn)">Save Attendance</button>
         </div>
     </form>
+
+    <section class="panel-card">
+        <div class="panel-heading">
+            <div>
+                <h2>Slot Attendance Overview</h2>
+                <p class="muted-line">View check-in state and how many students were marked for each slot on this date.</p>
+            </div>
+        </div>
+        <div class="table-wrap">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Slot</th>
+                        <th>Room</th>
+                        <th>Check-in</th>
+                        <th>Marked Students</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Slots.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="5">No slot data for this date.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var slot in Model.Slots)
+                        {
+                            <tr>
+                                <td>@slot.StartTime.ToString("HH:mm") - @slot.EndTime.ToString("HH:mm")</td>
+                                <td>@(string.IsNullOrWhiteSpace(slot.Room) ? "TBA" : slot.Room)</td>
+                                <td>
+                                    @if (slot.IsCheckedIn)
+                                    {
+                                        <span class="status-pill status-active">Checked in</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="status-pill status-warn">Pending</span>
+                                    }
+                                </td>
+                                <td>@slot.RecordedStudents</td>
+                                <td>
+                                    <a class="btn btn-sm btn-outline-secondary"
+                                       asp-action="Attendance"
+                                       asp-route-classId="@Model.ClassId"
+                                       asp-route-attendanceDate="@Model.Form.AttendanceDate"
+                                       asp-route-scheduleId="@slot.ScheduleId">View Slot</a>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
 </section>

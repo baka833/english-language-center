@@ -9,90 +9,100 @@
         <div>
             <p class="eyebrow">Admin Workspace</p>
             <h1>Users</h1>
-            <p>Manage teachers, students and staff accounts, including activation, reset password and grade-component permission.</p>
+            <p>Manage teachers and students accounts, including activation, reset password and grade-component permission.</p>
         </div>
     </div>
 
-    <section class="panel-card accent-card">
-        <div class="panel-heading">
-            <h2>Create User</h2>
-        </div>
-        <form method="post" asp-action="CreateUser" class="stack-form">
-            @Html.AntiForgeryToken()
-            <div class="form-split">
-                <label>
-                    <span>Username</span>
-                    <input asp-for="CreateForm.Username" />
-                </label>
-                <label>
-                    <span>Full Name</span>
-                    <input asp-for="CreateForm.Fullname" />
-                </label>
+    <div class="admin-grid admin-grid-two">
+        <section class="panel-card">
+            <div class="panel-heading">
+                <h2>Filter</h2>
             </div>
-            <div class="form-split">
-                <label>
-                    <span>Email</span>
-                    <input asp-for="CreateForm.Email" type="email" />
-                </label>
-                <label>
-                    <span>Gender</span>
-                    <input asp-for="CreateForm.Gender" />
-                </label>
-            </div>
-            <div class="form-split">
-                <label>
-                    <span>Date of Birth</span>
-                    <input asp-for="CreateForm.Dob" type="date" />
-                </label>
+            <form method="get" asp-action="Users" class="stack-form compact-form">
                 <label>
                     <span>Role</span>
-                    <select asp-for="CreateForm.Role">
-                        <option value="Teacher">Teacher</option>
-                        <option value="Student">Student</option>
-                        <option value="Staff">Staff</option>
+                    <select name="role">
+                        <option value="">All</option>
+                        <option value="Teacher" selected="@(Model.RoleFilter == "Teacher")">Teacher</option>
+                        <option value="Student" selected="@(Model.RoleFilter == "Student")">Student</option>
+                        <option value="Admin" selected="@(Model.RoleFilter == "Admin")">Admin</option>
                     </select>
                 </label>
-            </div>
-            <label>
-                <span>Password</span>
-                <input asp-for="CreateForm.Password" />
-            </label>
-            <div class="toggle-row">
-                <label class="toggle-option">
-                    <input asp-for="CreateForm.IsActive" type="checkbox" />
-                    <span>Active immediately</span>
+                <label>
+                    <span>Status</span>
+                    <select name="isActive">
+                        <option value="">All</option>
+                        <option value="true" selected="@(Model.IsActiveFilter == true)">Active</option>
+                        <option value="false" selected="@(Model.IsActiveFilter == false)">Locked</option>
+                    </select>
                 </label>
-                <label class="toggle-option">
-                    <input asp-for="CreateForm.CanManageGradeComponents" type="checkbox" />
-                    <span>Allow grade component management</span>
-                </label>
+                <button class="btn btn-primary" type="submit">Apply Filters</button>
+            </form>
+        </section>
+
+        <section class="panel-card accent-card">
+            <div class="panel-heading">
+                <h2>Create User</h2>
             </div>
-            <button class="btn btn-primary" type="submit">Create User</button>
-        </form>
-    </section>
+            <form method="post" asp-action="CreateUser" class="stack-form">
+                @Html.AntiForgeryToken()
+                <div class="form-split">
+                    <label>
+                        <span>Username</span>
+                        <input asp-for="CreateForm.Username" />
+                    </label>
+                    <label>
+                        <span>Full Name</span>
+                        <input asp-for="CreateForm.Fullname" />
+                    </label>
+                </div>
+                <div class="form-split">
+                    <label>
+                        <span>Email</span>
+                        <input asp-for="CreateForm.Email" type="email" />
+                    </label>
+                    <label>
+                        <span>Gender</span>
+                        <input asp-for="CreateForm.Gender" />
+                    </label>
+                </div>
+                <div class="form-split">
+                    <label>
+                        <span>Date of Birth</span>
+                        <input asp-for="CreateForm.Dob" type="date" />
+                    </label>
+                    <label>
+                        <span>Role</span>
+                        <select asp-for="CreateForm.Role">
+                            <option value="Teacher">Teacher</option>
+                            <option value="Student">Student</option>
+                        </select>
+                    </label>
+                </div>
+                <label>
+                    <span>Password</span>
+                    <input asp-for="CreateForm.Password" />
+                </label>
+                <div class="toggle-row">
+                    <label class="toggle-option">
+                        <input asp-for="CreateForm.IsActive" type="checkbox" />
+                        <span>Active immediately</span>
+                    </label>
+                    <label class="toggle-option">
+                        <input asp-for="CreateForm.CanManageGradeComponents" type="checkbox" />
+                        <span>Allow grade component management</span>
+                    </label>
+                </div>
+                <button class="btn btn-primary" type="submit">Create User</button>
+            </form>
+        </section>
+    </div>
+        </section>
+    </div>
+        </section>
+    </div>
 
     <section class="panel-card">
-        <div class="panel-heading">
-            <h2>User Directory</h2>
-            <span class="meta-chip">@Model.Users.Count account(s)</span>
-        </div>
-        <form method="get" asp-action="Users" class="stack-form compact-form filter-bar">
-            <label>
-                <span>Role</span>
-                <select name="role">
-                    <option value="">All</option>
-                    <option value="Teacher" selected="@(Model.RoleFilter == "Teacher")">Teacher</option>
-                    <option value="Student" selected="@(Model.RoleFilter == "Student")">Student</option>
-                    <option value="Staff" selected="@(Model.RoleFilter == "Staff")">Staff</option>
-                    <option value="Admin" selected="@(Model.RoleFilter == "Admin")">Admin</option>
-                </select>
-            </label>
-            <label>
-                <span>Status</span>
-                <select name="isActive">
-                    <option value="">All</option>
-                    <option value="true" selected="@(Model.IsActiveFilter == true)">Active</option>
-                    <option value="false" selected="@(Model.IsActiveFilter == false)">Locked</option>
                 </select>
             </label>
             <button class="btn btn-primary" type="submit">Apply Filters</button>

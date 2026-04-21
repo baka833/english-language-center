@@ -917,6 +917,27 @@ a {
   margin-top: 1.2rem;
 }
 
+.attendance-toolbar-form {
+  align-items: end;
+}
+
+.teacher-checkin-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 1rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(28, 36, 51, 0.1);
+  background: rgba(255, 255, 255, 0.75);
+}
+
+.teacher-checkin-panel h2 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
 @media (max-width: 1100px) {
   .teacher-calendar-weekdays,
   .teacher-calendar-grid {

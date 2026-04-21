@@ -33,4 +33,6 @@ public partial class User
     public virtual ICollection<Class> Classes { get; set; } = new List<Class>();
 
     public virtual ICollection<Grade> Grades { get; set; } = new List<Grade>();
+
+    public virtual ICollection<TeacherCheckIn> TeacherCheckIns { get; set; } = new List<TeacherCheckIn>();
 }

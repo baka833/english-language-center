@@ -19,12 +19,12 @@ public sealed class TeacherApiClient : ITeacherApiClient
         _httpClient = httpClient;
     }
 
-    public Task<IReadOnlyCollection<TeacherAssignedClassItem>> GetAssignedClassesAsync(int teacherId, CancellationToken cancellationToken = default)
+    public Task<IReadOnlyCollection<TeacherAssignedClassItem>> GetAssignedClassesAsync(CancellationToken cancellationToken = default)
     {
-        return GetRequiredAsync<IReadOnlyCollection<TeacherAssignedClassItem>>($"api/teachers/{teacherId}/classes", cancellationToken);
+        return GetRequiredAsync<IReadOnlyCollection<TeacherAssignedClassItem>>("api/teacher/classes", cancellationToken);
     }
 
-    public Task<IReadOnlyCollection<TeacherScheduleItem>> GetScheduleAsync(int teacherId, DateOnly? fromDate, DateOnly? toDate, int? month, int? year, CancellationToken cancellationToken = default)
+    public Task<IReadOnlyCollection<TeacherScheduleItem>> GetScheduleAsync(DateOnly? fromDate, DateOnly? toDate, int? month, int? year, CancellationToken cancellationToken = default)
     {
         var queryParts = new List<string>();
         if (fromDate.HasValue)
@@ -48,50 +48,60 @@ public sealed class TeacherApiClient : ITeacherApiClient
         }
 
         var path = queryParts.Count == 0
-            ? $"api/teachers/{teacherId}/schedule"
-            : $"api/teachers/{teacherId}/schedule?{string.Join("&", queryParts)}";
+            ? "api/teacher/schedule"
+            : $"api/teacher/schedule?{string.Join("&", queryParts)}";
 
         return GetRequiredAsync<IReadOnlyCollection<TeacherScheduleItem>>(path, cancellationToken);
     }
 
-    public Task<IReadOnlyCollection<TeacherStudentItem>?> GetStudentsByClassAsync(int teacherId, int classId, CancellationToken cancellationToken = default)
+    public Task<IReadOnlyCollection<TeacherStudentItem>?> GetStudentsByClassAsync(int classId, CancellationToken cancellationToken = default)
     {
-        return GetOptionalAsync<IReadOnlyCollection<TeacherStudentItem>>($"api/teachers/{teacherId}/classes/{classId}/students", cancellationToken);
+        return GetOptionalAsync<IReadOnlyCollection<TeacherStudentItem>>($"api/teacher/classes/{classId}/students", cancellationToken);
     }
 
-    public Task<IReadOnlyCollection<AttendanceRecordItem>?> GetAttendanceByDateAsync(int teacherId, int classId, DateOnly attendanceDate, CancellationToken cancellationToken = default)
+    public Task<IReadOnlyCollection<AttendanceSlotItem>?> GetAttendanceSlotsAsync(int classId, DateOnly attendanceDate, CancellationToken cancellationToken = default)
     {
-        return GetOptionalAsync<IReadOnlyCollection<AttendanceRecordItem>>($"api/teachers/{teacherId}/classes/{classId}/attendance?attendanceDate={attendanceDate:yyyy-MM-dd}", cancellationToken);
+        return GetOptionalAsync<IReadOnlyCollection<AttendanceSlotItem>>($"api/teacher/classes/{classId}/attendance-slots?attendanceDate={attendanceDate:yyyy-MM-dd}", cancellationToken);
     }
 
-    public Task<IReadOnlyCollection<AttendanceRecordItem>?> UpsertAttendanceAsync(int teacherId, int classId, UpsertAttendanceRequestModel request, CancellationToken cancellationToken = default)
+    public Task<AttendanceSlotItem?> CheckInAttendanceSlotAsync(int classId, TeacherAttendanceCheckInRequestModel request, CancellationToken cancellationToken = default)
     {
-        return SendOptionalAsync<IReadOnlyCollection<AttendanceRecordItem>>(HttpMethod.Put, $"api/teachers/{teacherId}/classes/{classId}/attendance", request, cancellationToken);
+        return SendOptionalAsync<AttendanceSlotItem>(HttpMethod.Post, $"api/teacher/classes/{classId}/attendance-checkin", request, cancellationToken);
     }
 
-    public Task<AttendanceSummaryItem?> GetAttendanceSummaryAsync(int teacherId, int classId, CancellationToken cancellationToken = default)
+    public Task<IReadOnlyCollection<AttendanceRecordItem>?> GetAttendanceByDateAsync(int classId, DateOnly attendanceDate, int scheduleId, CancellationToken cancellationToken = default)
     {
-        return GetOptionalAsync<AttendanceSummaryItem>($"api/teachers/{teacherId}/classes/{classId}/attendance-summary", cancellationToken);
+        return GetOptionalAsync<IReadOnlyCollection<AttendanceRecordItem>>($"api/teacher/classes/{classId}/attendance?attendanceDate={attendanceDate:yyyy-MM-dd}&scheduleId={scheduleId}", cancellationToken);
     }
 
-    public Task<IReadOnlyCollection<TeacherGradeComponentItem>?> GetGradeComponentsAsync(int teacherId, int classId, CancellationToken cancellationToken = default)
+    public Task<IReadOnlyCollection<AttendanceRecordItem>?> UpsertAttendanceAsync(int classId, UpsertAttendanceRequestModel request, CancellationToken cancellationToken = default)
     {
-        return GetOptionalAsync<IReadOnlyCollection<TeacherGradeComponentItem>>($"api/teachers/{teacherId}/classes/{classId}/grade-components", cancellationToken);
+        return SendOptionalAsync<IReadOnlyCollection<AttendanceRecordItem>>(HttpMethod.Put, $"api/teacher/classes/{classId}/attendance", request, cancellationToken);
     }
 
-    public Task<TeacherGradeComponentItem?> CreateGradeComponentAsync(int teacherId, int classId, UpsertGradeComponentRequestModel request, CancellationToken cancellationToken = default)
+    public Task<AttendanceSummaryItem?> GetAttendanceSummaryAsync(int classId, CancellationToken cancellationToken = default)
     {
-        return SendOptionalAsync<TeacherGradeComponentItem>(HttpMethod.Post, $"api/teachers/{teacherId}/classes/{classId}/grade-components", request, cancellationToken);
+        return GetOptionalAsync<AttendanceSummaryItem>($"api/teacher/classes/{classId}/attendance-summary", cancellationToken);
     }
 
-    public Task<TeacherGradeComponentItem?> UpdateGradeComponentAsync(int teacherId, int classId, int componentId, UpsertGradeComponentRequestModel request, CancellationToken cancellationToken = default)
+    public Task<IReadOnlyCollection<TeacherGradeComponentItem>?> GetGradeComponentsAsync(int classId, CancellationToken cancellationToken = default)
     {
-        return SendOptionalAsync<TeacherGradeComponentItem>(HttpMethod.Put, $"api/teachers/{teacherId}/classes/{classId}/grade-components/{componentId}", request, cancellationToken);
+        return GetOptionalAsync<IReadOnlyCollection<TeacherGradeComponentItem>>($"api/teacher/classes/{classId}/grade-components", cancellationToken);
     }
 
-    public async Task<bool> DeleteGradeComponentAsync(int teacherId, int classId, int componentId, CancellationToken cancellationToken = default)
+    public Task<TeacherGradeComponentItem?> CreateGradeComponentAsync(int classId, UpsertGradeComponentRequestModel request, CancellationToken cancellationToken = default)
     {
-        using var response = await _httpClient.DeleteAsync($"api/teachers/{teacherId}/classes/{classId}/grade-components/{componentId}", cancellationToken);
+        return SendOptionalAsync<TeacherGradeComponentItem>(HttpMethod.Post, $"api/teacher/classes/{classId}/grade-components", request, cancellationToken);
+    }
+
+    public Task<TeacherGradeComponentItem?> UpdateGradeComponentAsync(int classId, int componentId, UpsertGradeComponentRequestModel request, CancellationToken cancellationToken = default)
+    {
+        return SendOptionalAsync<TeacherGradeComponentItem>(HttpMethod.Put, $"api/teacher/classes/{classId}/grade-components/{componentId}", request, cancellationToken);
+    }
+
+    public async Task<bool> DeleteGradeComponentAsync(int classId, int componentId, CancellationToken cancellationToken = default)
+    {
+        using var response = await _httpClient.DeleteAsync($"api/teacher/classes/{classId}/grade-components/{componentId}", cancellationToken);
         if (response.StatusCode == HttpStatusCode.NotFound)
         {
             return false;
@@ -101,24 +111,24 @@ public sealed class TeacherApiClient : ITeacherApiClient
         return true;
     }
 
-    public Task<IReadOnlyCollection<GradeEntryItem>?> GetGradesAsync(int teacherId, int classId, int componentId, CancellationToken cancellationToken = default)
+    public Task<IReadOnlyCollection<GradeEntryItem>?> GetGradesAsync(int classId, int componentId, CancellationToken cancellationToken = default)
     {
-        return GetOptionalAsync<IReadOnlyCollection<GradeEntryItem>>($"api/teachers/{teacherId}/classes/{classId}/grade-components/{componentId}/grades", cancellationToken);
+        return GetOptionalAsync<IReadOnlyCollection<GradeEntryItem>>($"api/teacher/classes/{classId}/grade-components/{componentId}/grades", cancellationToken);
     }
 
-    public Task<GradeEntryItem?> UpsertGradeAsync(int teacherId, int classId, int componentId, UpsertGradeRequestModel request, CancellationToken cancellationToken = default)
+    public Task<GradeEntryItem?> UpsertGradeAsync(int classId, int componentId, UpsertGradeRequestModel request, CancellationToken cancellationToken = default)
     {
-        return SendOptionalAsync<GradeEntryItem>(HttpMethod.Put, $"api/teachers/{teacherId}/classes/{classId}/grade-components/{componentId}/grades", request, cancellationToken);
+        return SendOptionalAsync<GradeEntryItem>(HttpMethod.Put, $"api/teacher/classes/{classId}/grade-components/{componentId}/grades", request, cancellationToken);
     }
 
-    public Task<IReadOnlyCollection<TeacherApplicationItem>> GetApplicationsAsync(int teacherId, CancellationToken cancellationToken = default)
+    public Task<IReadOnlyCollection<TeacherApplicationItem>> GetApplicationsAsync(CancellationToken cancellationToken = default)
     {
-        return GetRequiredAsync<IReadOnlyCollection<TeacherApplicationItem>>($"api/teachers/{teacherId}/applications", cancellationToken);
+        return GetRequiredAsync<IReadOnlyCollection<TeacherApplicationItem>>("api/teacher/applications", cancellationToken);
     }
 
-    public Task<TeacherApplicationItem> CreateApplicationAsync(int teacherId, CreateTeacherApplicationRequestModel request, CancellationToken cancellationToken = default)
+    public Task<TeacherApplicationItem> CreateApplicationAsync(CreateTeacherApplicationRequestModel request, CancellationToken cancellationToken = default)
     {
-        return SendRequiredAsync<TeacherApplicationItem>(HttpMethod.Post, $"api/teachers/{teacherId}/applications", request, cancellationToken);
+        return SendRequiredAsync<TeacherApplicationItem>(HttpMethod.Post, "api/teacher/applications", request, cancellationToken);
     }
 
     private async Task<T> GetRequiredAsync<T>(string path, CancellationToken cancellationToken)
