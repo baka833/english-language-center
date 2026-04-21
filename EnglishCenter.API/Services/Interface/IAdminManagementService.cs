@@ -1,4 +1,4 @@
-using EnglishCenter.API.DTOs;
+using EnglishCenter.API.DTOs.Admin;
 
 namespace EnglishCenter.API.Services.Interface;
 

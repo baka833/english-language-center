@@ -1,6 +1,6 @@
 using System.Globalization;
 using System.Security.Cryptography;
-using EnglishCenter.API.DTOs;
+using EnglishCenter.API.DTOs.Admin;
 using EnglishCenter.API.Models;
 using EnglishCenter.API.Services.Interface;
 using Microsoft.AspNetCore.Identity;

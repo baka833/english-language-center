@@ -1,4 +1,4 @@
-using EnglishCenter.API.DTOs;
+using EnglishCenter.API.DTOs.Auth;
 using EnglishCenter.API.Models;
 using EnglishCenter.API.Services.Interface;
 using Microsoft.AspNetCore.Authorization;
@@ -54,13 +54,6 @@ namespace EnglishCenter.API.Controllers
                 Fullname = user.Fullname,
                 Role = user.Role
             });
-        }
-
-        [HttpPost("logout")]
-        [Authorize]
-        public IActionResult Logout()
-        {
-            return NoContent();
         }
     }
 }

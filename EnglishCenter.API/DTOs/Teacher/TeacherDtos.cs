@@ -1,4 +1,6 @@
-namespace EnglishCenter.API.DTOs;
+using EnglishCenter.API.DTOs.Admin;
+
+namespace EnglishCenter.API.DTOs.Teacher;
 
 public sealed class TeacherAssignedClassDto
 {

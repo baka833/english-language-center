@@ -1,4 +1,4 @@
-using EnglishCenter.API.DTOs;
+using EnglishCenter.API.DTOs.Teacher;
 using EnglishCenter.API.Services.Interface;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

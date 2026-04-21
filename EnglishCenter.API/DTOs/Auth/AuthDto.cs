@@ -1,4 +1,4 @@
-namespace EnglishCenter.API.DTOs
+namespace EnglishCenter.API.DTOs.Auth
 {
     public class LoginRequestDto
     {
