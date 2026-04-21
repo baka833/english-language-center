@@ -18,6 +18,8 @@ html {
 }
 
 body {
+  display: flex;
+  flex-direction: column;
   min-height: 100vh;
   margin: 0;
   color: var(--ink);
@@ -33,7 +35,11 @@ a {
 }
 
 .app-shell {
+  flex-grow: 1;
+  width: 100%;
   max-width: 1440px;
+  margin-left: auto;
+  margin-right: auto;
   padding: 1.5rem 1rem 3rem;
 }
 
@@ -50,7 +56,7 @@ a {
 
 .admin-sidebar {
   position: sticky;
-  top: 5.9rem;
+  top: 1rem;
 }
 
 .sidebar-block {
@@ -93,9 +99,6 @@ a {
 }
 
 .shell-header {
-  position: sticky;
-  top: 0;
-  z-index: 30;
   backdrop-filter: blur(18px);
   background: rgba(242, 238, 227, 0.72);
   border-bottom: 1px solid rgba(28, 36, 51, 0.08);
@@ -103,6 +106,8 @@ a {
 
 .app-nav-inner {
   max-width: 1440px;
+  padding-left: 1rem;
+  padding-right: 1rem;
 }
 
 .brand-lockup {
@@ -368,6 +373,13 @@ a {
 
 .compact-form {
   gap: 0.75rem;
+}
+
+.filter-bar {
+  flex-direction: row;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  margin-bottom: 1.25rem;
 }
 
 .stack-form label,
@@ -969,7 +981,9 @@ a {
 }
 
 .footer {
-  padding: 0 1rem 1.25rem;
+  margin-top: auto;
+  flex-shrink: 0;
+  padding-bottom: 1.25rem;
 }
 
 .footer-inner {
@@ -977,6 +991,8 @@ a {
   display: flex;
   justify-content: space-between;
   gap: 1rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
 }
 
 .btn {

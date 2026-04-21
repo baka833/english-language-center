@@ -1,0 +1,78 @@
+@model StudentApplicationsPageViewModel
+@using EnglishCenter.Web.Models.Student
+
+@{
+    ViewData["Title"] = "Applications";
+}
+
+<section class="page-shell">
+    <div class="page-header">
+        <div>
+            <p class="eyebrow">Student Portal</p>
+            <h1>Applications</h1>
+            <p>Submit requests and track admin feedback.</p>
+        </div>
+    </div>
+
+    <section class="panel-card accent-card">
+        <div class="panel-heading">
+            <h2>Create Application</h2>
+        </div>
+        <form method="post" asp-action="CreateApplication" class="stack-form">
+            @Html.AntiForgeryToken()
+            <div class="form-split">
+                <label>
+                    <span>Title</span>
+                    <input asp-for="CreateForm.Title" />
+                </label>
+                <label>
+                    <span>Type</span>
+                    <select asp-for="CreateForm.Type">
+                        <option value="Leave">Leave</option>
+                        <option value="GradeDispute">Grade Dispute</option>
+                        <option value="Enrollment">Enrollment</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </label>
+            </div>
+            <label>
+                <span>Content</span>
+                <textarea asp-for="CreateForm.Content"></textarea>
+            </label>
+            <div class="action-stack">
+                <button class="btn btn-primary" type="submit">Submit</button>
+            </div>
+        </form>
+    </section>
+
+    <section class="panel-card">
+        <div class="application-list">
+            @if (Model.Applications.Count == 0)
+            {
+                <div class="item-card">
+                    <div>
+                        <h3>No applications yet.</h3>
+                        <p class="muted-line">Submitted requests and admin replies will appear here.</p>
+                    </div>
+                </div>
+            }
+            else
+            {
+                @foreach (var item in Model.Applications)
+                {
+                    <article class="item-card teacher-card teacher-card-vertical">
+                        <div>
+                            <h3>@item.Title</h3>
+                            <p>@(string.IsNullOrWhiteSpace(item.Content) ? "No details provided." : item.Content)</p>
+                            <span class="micro-meta">Type: @(item.Type ?? "-") · Status: @(item.Status ?? "-") · Created: @(item.CreatedAt?.ToString("dd/MM/yyyy HH:mm") ?? "-")</span>
+                        </div>
+                        <div class="response-box">
+                            <strong>Admin Response</strong>
+                            <p>@(string.IsNullOrWhiteSpace(item.AdminResponse) ? "No response yet." : item.AdminResponse)</p>
+                        </div>
+                    </article>
+                }
+            }
+        </div>
+    </section>
+</section>

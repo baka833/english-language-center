@@ -18,12 +18,14 @@ public sealed class TeacherController : Controller
         _logger = logger;
     }
 
+    // GET: Teacher
     [HttpGet]
     public IActionResult Index()
     {
         return RedirectToAction(nameof(Classes));
     }
 
+    // GET: Teacher/Classes
     [HttpGet]
     public async Task<IActionResult> Classes(CancellationToken cancellationToken)
     {
@@ -42,6 +44,7 @@ public sealed class TeacherController : Controller
         }
     }
 
+    // GET: Teacher/Schedule
     [HttpGet]
     public async Task<IActionResult> Schedule(int? month, int? year, CancellationToken cancellationToken)
     {
@@ -62,6 +65,7 @@ public sealed class TeacherController : Controller
         }
     }
 
+    // GET: Teacher/Students?classId={classId}
     [HttpGet]
     public async Task<IActionResult> Students(int classId, CancellationToken cancellationToken)
     {
@@ -97,6 +101,7 @@ public sealed class TeacherController : Controller
         }
     }
 
+    // GET: Teacher/Attendance?classId={classId}
     [HttpGet]
     public async Task<IActionResult> Attendance(int classId, string? attendanceDate, int? scheduleId, CancellationToken cancellationToken)
     {
@@ -155,6 +160,7 @@ public sealed class TeacherController : Controller
             return RedirectToAction(nameof(Classes));
         }
     }
+
 
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -219,6 +225,7 @@ public sealed class TeacherController : Controller
         return RedirectToAction(nameof(Attendance), new { classId, attendanceDate = form.AttendanceDate, scheduleId = form.ScheduleId });
     }
 
+    // GET: Teacher/AttendanceSummary?classId={classId}
     [HttpGet]
     public async Task<IActionResult> AttendanceSummary(int classId, CancellationToken cancellationToken)
     {
@@ -241,6 +248,7 @@ public sealed class TeacherController : Controller
         }
     }
 
+    // GET: Teacher/GradeComponents?classId={classId}
     [HttpGet]
     public async Task<IActionResult> GradeComponents(int classId, CancellationToken cancellationToken)
     {
@@ -340,6 +348,7 @@ public sealed class TeacherController : Controller
         return RedirectToAction(nameof(GradeComponents), new { classId });
     }
 
+    // GET: Teacher/Grades?classId={classId}&componentId={componentId}
     [HttpGet]
     public async Task<IActionResult> Grades(int classId, int componentId, CancellationToken cancellationToken)
     {
@@ -414,6 +423,7 @@ public sealed class TeacherController : Controller
         return RedirectToAction(nameof(Grades), new { classId, componentId });
     }
 
+    // GET: Teacher/Applications
     [HttpGet]
     public async Task<IActionResult> Applications(CancellationToken cancellationToken)
     {
@@ -432,6 +442,7 @@ public sealed class TeacherController : Controller
             return View(new TeacherApplicationsPageViewModel { CreateForm = new TeacherApplicationForm { Type = "Leave" } });
         }
     }
+
 
     [HttpPost]
     [ValidateAntiForgeryToken]

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace EnglishCenter.API.Models;
+﻿namespace EnglishCenter.API.Models;
 
 public partial class Class
 {
@@ -18,7 +15,6 @@ public partial class Class
     public DateOnly? EndDate { get; set; }
 
     public string? Status { get; set; }
-
 
     public bool? AllowTeacherGradeComponentManagement { get; set; }
 

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace EnglishCenter.API.Models;
+﻿namespace EnglishCenter.API.Models;
 
 public partial class Course
 {

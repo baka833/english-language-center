@@ -33,8 +33,6 @@
     <Folder Include="DTOs\" />
     <Folder Include="Repositories\Impl\" />
     <Folder Include="Repositories\Interface\" />
-    <Folder Include="Services\Impl\" />
-    <Folder Include="Services\Interface\" />
 
   </ItemGroup>
 
