@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
 
 namespace EnglishCenter.API.Controllers
 {
@@ -48,48 +47,10 @@ namespace EnglishCenter.API.Controllers
                 return Unauthorized(new { message = "Account is disabled." });
 
             var accessToken = _jwt.GenerateAccessToken(user);
-            var refreshToken = _jwt.GenerateRefreshToken();
-            _jwt.SaveRefreshToken(user.UserId, refreshToken);
 
             return Ok(new AuthResponseDto
             {
                 AccessToken = accessToken,
-                RefreshToken = refreshToken,
-                Fullname = user.Fullname,
-                Role = user.Role
-            });
-        }
-
-        [HttpPost("refresh")]
-        public async Task<IActionResult> Refresh([FromBody] RefreshRequestDto dto)
-        {
-            var accessToken = Request.Headers.Authorization.FirstOrDefault()?.Replace("Bearer ", "");
-            if (string.IsNullOrEmpty(accessToken))
-                return BadRequest(new { message = "Access token is required." });
-
-            var principal = _jwt.GetPrincipalFromExpiredToken(accessToken);
-            if (principal == null)
-                return Unauthorized(new { message = "Invalid access token." });
-
-            var userIdClaim = principal.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (!int.TryParse(userIdClaim, out var userId))
-                return Unauthorized(new { message = "Invalid token claims." });
-
-            if (!_jwt.ValidateRefreshToken(userId, dto.RefreshToken))
-                return Unauthorized(new { message = "Invalid or expired refresh token." });
-
-            var user = await _db.Users.FindAsync(userId);
-            if (user == null || user.IsActive == false)
-                return Unauthorized(new { message = "User not found or disabled." });
-
-            var newAccessToken = _jwt.GenerateAccessToken(user);
-            var newRefreshToken = _jwt.GenerateRefreshToken();
-            _jwt.SaveRefreshToken(userId, newRefreshToken);
-
-            return Ok(new AuthResponseDto
-            {
-                AccessToken = newAccessToken,
-                RefreshToken = newRefreshToken,
                 Fullname = user.Fullname,
                 Role = user.Role
             });
@@ -99,10 +60,6 @@ namespace EnglishCenter.API.Controllers
         [Authorize]
         public IActionResult Logout()
         {
-            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (int.TryParse(userIdClaim, out var userId))
-                _jwt.RevokeRefreshToken(userId);
-
             return NoContent();
         }
     }

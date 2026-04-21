@@ -50,7 +50,6 @@ public sealed class AccountController : Controller
             var role = principal.FindFirstValue(ClaimTypes.Role);
 
             HttpContext.Session.SetString(AuthSessionKeys.AccessToken, auth.AccessToken);
-            HttpContext.Session.SetString(AuthSessionKeys.RefreshToken, auth.RefreshToken);
 
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
 

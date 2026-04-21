@@ -1,10 +1,8 @@
 using EnglishCenter.API.Models;
 using EnglishCenter.API.Services.Interface;
 using Microsoft.IdentityModel.Tokens;
-using System.Collections.Concurrent;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Security.Cryptography;
 using System.Text;
 
 namespace EnglishCenter.API.Services.Impl
@@ -14,10 +12,6 @@ namespace EnglishCenter.API.Services.Impl
         private readonly IConfiguration _config;
         private readonly SymmetricSecurityKey _signingKey;
         private readonly int _accessTokenExpiryMinutes;
-        private readonly int _refreshTokenExpiryDays;
-
-        // In-memory store: userId → (refreshToken, expiry)
-        private static readonly ConcurrentDictionary<int, (string Token, DateTime Expiry)> _refreshTokens = new();
 
         public JwtService(IConfiguration config)
         {
@@ -25,7 +19,6 @@ namespace EnglishCenter.API.Services.Impl
             var key = Encoding.UTF8.GetBytes(_config["Jwt:Key"]!);
             _signingKey = new SymmetricSecurityKey(key);
             _accessTokenExpiryMinutes = int.Parse(_config["Jwt:AccessTokenExpiryMinutes"]!);
-            _refreshTokenExpiryDays = int.Parse(_config["Jwt:RefreshTokenExpiryDays"]!);
         }
 
         public string GenerateAccessToken(User user)
@@ -49,53 +42,6 @@ namespace EnglishCenter.API.Services.Impl
             );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
-        }
-
-        public string GenerateRefreshToken()
-        {
-            var bytes = RandomNumberGenerator.GetBytes(64);
-            return Convert.ToBase64String(bytes);
-        }
-
-        public ClaimsPrincipal? GetPrincipalFromExpiredToken(string token)
-        {
-            var parameters = new TokenValidationParameters
-            {
-                ValidateIssuer = true,
-                ValidateAudience = true,
-                ValidateLifetime = false,
-                ValidateIssuerSigningKey = true,
-                ValidIssuer = _config["Jwt:Issuer"],
-                ValidAudience = _config["Jwt:Audience"],
-                IssuerSigningKey = _signingKey,
-            };
-
-            try
-            {
-                return new JwtSecurityTokenHandler().ValidateToken(token, parameters, out _);
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
-        public void SaveRefreshToken(int userId, string refreshToken)
-        {
-            _refreshTokens[userId] = (refreshToken, DateTime.UtcNow.AddDays(_refreshTokenExpiryDays));
-        }
-
-        public bool ValidateRefreshToken(int userId, string refreshToken)
-        {
-            if (!_refreshTokens.TryGetValue(userId, out var entry))
-                return false;
-
-            return entry.Token == refreshToken && entry.Expiry > DateTime.UtcNow;
-        }
-
-        public void RevokeRefreshToken(int userId)
-        {
-            _refreshTokens.TryRemove(userId, out _);
         }
     }
 }
