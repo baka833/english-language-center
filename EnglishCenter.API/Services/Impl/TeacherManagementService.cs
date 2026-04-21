@@ -97,9 +97,118 @@ public sealed class TeacherManagementService : ITeacherManagementService
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<IReadOnlyCollection<AttendanceRecordDto>?> GetAttendanceByDateAsync(int teacherId, int classId, DateOnly attendanceDate, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyCollection<AttendanceSlotDto>?> GetAttendanceSlotsAsync(int teacherId, int classId, DateOnly attendanceDate, CancellationToken cancellationToken = default)
     {
-        return await GetAttendanceRecordsAsync(teacherId, classId, attendanceDate, cancellationToken);
+        if (!await IsAssignedClassAsync(teacherId, classId, cancellationToken))
+        {
+            return null;
+        }
+
+        var storedDayOfWeek = MapToStoredDayOfWeek(attendanceDate.DayOfWeek);
+        var schedules = await _dbContext.Schedules.AsNoTracking()
+            .Where(item => item.ClassId == classId
+                && ((!item.ScheduleDate.HasValue && item.DayOfWeek == storedDayOfWeek)
+                    || (item.ScheduleDate.HasValue && item.ScheduleDate.Value == attendanceDate)))
+            .OrderBy(item => item.StartTime)
+            .ThenBy(item => item.EndTime)
+            .ToListAsync(cancellationToken);
+
+        var scheduleIds = schedules.Select(item => item.ScheduleId).ToArray();
+        var checkIns = await _dbContext.TeacherCheckIns.AsNoTracking()
+            .Where(item => item.TeacherId == teacherId
+                && item.ClassId == classId
+                && item.AttendanceDate == attendanceDate
+                && scheduleIds.Contains(item.ScheduleId))
+            .ToListAsync(cancellationToken);
+        var checkInLookup = checkIns.ToDictionary(item => item.ScheduleId);
+
+        var attendanceCounts = await _dbContext.Attendances.AsNoTracking()
+            .Where(item => item.ClassId == classId
+                && item.AttendanceDate == attendanceDate
+                && item.ScheduleId.HasValue
+                && scheduleIds.Contains(item.ScheduleId.Value)
+                && !string.IsNullOrWhiteSpace(item.Status))
+            .GroupBy(item => item.ScheduleId!.Value)
+            .Select(item => new { ScheduleId = item.Key, Count = item.Count() })
+            .ToListAsync(cancellationToken);
+        var attendanceLookup = attendanceCounts.ToDictionary(item => item.ScheduleId, item => item.Count);
+
+        return schedules.Select(item =>
+        {
+            checkInLookup.TryGetValue(item.ScheduleId, out var checkIn);
+            return new AttendanceSlotDto
+            {
+                ScheduleId = item.ScheduleId,
+                ScheduleDate = item.ScheduleDate,
+                DayOfWeek = item.DayOfWeek,
+                StartTime = item.StartTime,
+                EndTime = item.EndTime,
+                Room = item.Room,
+                IsCheckedIn = checkIn is not null,
+                CheckedInAt = checkIn?.CheckedInAt,
+                RecordedStudents = attendanceLookup.GetValueOrDefault(item.ScheduleId)
+            };
+        }).ToList();
+    }
+
+    public async Task<AttendanceSlotDto?> CheckInAttendanceSlotAsync(int teacherId, int classId, TeacherAttendanceCheckInRequest request, CancellationToken cancellationToken = default)
+    {
+        if (!await IsAssignedClassAsync(teacherId, classId, cancellationToken))
+        {
+            return null;
+        }
+
+        if (request.AttendanceDate > DateOnly.FromDateTime(DateTime.Today))
+        {
+            throw new ArgumentException("Check-in cannot be created for a future date.", nameof(request));
+        }
+
+        var schedule = await EnsureValidAttendanceSlotAsync(classId, request.ScheduleId, request.AttendanceDate, cancellationToken);
+        var checkIn = await _dbContext.TeacherCheckIns
+            .FirstOrDefaultAsync(item => item.TeacherId == teacherId
+                && item.ClassId == classId
+                && item.ScheduleId == request.ScheduleId
+                && item.AttendanceDate == request.AttendanceDate, cancellationToken);
+
+        if (checkIn is null)
+        {
+            checkIn = new TeacherCheckIn
+            {
+                TeacherId = teacherId,
+                ClassId = classId,
+                ScheduleId = request.ScheduleId,
+                AttendanceDate = request.AttendanceDate,
+                CheckedInAt = DateTime.UtcNow
+            };
+
+            _dbContext.TeacherCheckIns.Add(checkIn);
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
+
+        var recordedStudents = await _dbContext.Attendances.AsNoTracking()
+            .Where(item => item.ClassId == classId
+                && item.AttendanceDate == request.AttendanceDate
+                && item.ScheduleId == request.ScheduleId
+                && !string.IsNullOrWhiteSpace(item.Status))
+            .CountAsync(cancellationToken);
+
+        return new AttendanceSlotDto
+        {
+            ScheduleId = schedule.ScheduleId,
+            ScheduleDate = schedule.ScheduleDate,
+            DayOfWeek = schedule.DayOfWeek,
+            StartTime = schedule.StartTime,
+            EndTime = schedule.EndTime,
+            Room = schedule.Room,
+            IsCheckedIn = true,
+            CheckedInAt = checkIn.CheckedInAt,
+            RecordedStudents = recordedStudents
+        };
+    }
+
+    public async Task<IReadOnlyCollection<AttendanceRecordDto>?> GetAttendanceByDateAsync(int teacherId, int classId, DateOnly attendanceDate, int scheduleId, CancellationToken cancellationToken = default)
+    {
+        return await GetAttendanceRecordsAsync(teacherId, classId, attendanceDate, scheduleId, cancellationToken);
     }
 
     public async Task<IReadOnlyCollection<AttendanceRecordDto>?> UpsertAttendanceAsync(int teacherId, int classId, UpsertAttendanceRequest request, CancellationToken cancellationToken = default)
@@ -117,6 +226,19 @@ public sealed class TeacherManagementService : ITeacherManagementService
         if (request.Records.Count == 0)
         {
             throw new ArgumentException("Attendance records are required.", nameof(request));
+        }
+
+        await EnsureValidAttendanceSlotAsync(classId, request.ScheduleId, request.AttendanceDate, cancellationToken);
+
+        var hasCheckIn = await _dbContext.TeacherCheckIns.AsNoTracking()
+            .AnyAsync(item => item.TeacherId == teacherId
+                && item.ClassId == classId
+                && item.ScheduleId == request.ScheduleId
+                && item.AttendanceDate == request.AttendanceDate, cancellationToken);
+
+        if (!hasCheckIn)
+        {
+            throw new InvalidOperationException("Please check in for this slot before taking attendance.");
         }
 
         var distinctStudentIds = request.Records.Select(item => item.StudentId).Distinct().ToArray();
@@ -141,7 +263,10 @@ public sealed class TeacherManagementService : ITeacherManagementService
         }
 
         var existingRecords = await _dbContext.Attendances
-            .Where(item => item.ClassId == classId && item.AttendanceDate == request.AttendanceDate && distinctStudentIds.Contains(item.StudentId))
+            .Where(item => item.ClassId == classId
+                && item.AttendanceDate == request.AttendanceDate
+                && item.ScheduleId == request.ScheduleId
+                && distinctStudentIds.Contains(item.StudentId))
             .ToListAsync(cancellationToken);
 
         var existingLookup = existingRecords.ToDictionary(item => item.StudentId);
@@ -158,6 +283,7 @@ public sealed class TeacherManagementService : ITeacherManagementService
             _dbContext.Attendances.Add(new Attendance
             {
                 ClassId = classId,
+                ScheduleId = request.ScheduleId,
                 StudentId = record.StudentId,
                 AttendanceDate = request.AttendanceDate,
                 Status = NormalizeStatus(record.Status),
@@ -166,7 +292,7 @@ public sealed class TeacherManagementService : ITeacherManagementService
         }
 
         await _dbContext.SaveChangesAsync(cancellationToken);
-        return await GetAttendanceRecordsAsync(teacherId, classId, request.AttendanceDate, cancellationToken);
+        return await GetAttendanceRecordsAsync(teacherId, classId, request.AttendanceDate, request.ScheduleId, cancellationToken);
     }
 
     public async Task<AttendanceSummaryDto?> GetAttendanceSummaryAsync(int teacherId, int classId, CancellationToken cancellationToken = default)
@@ -555,12 +681,14 @@ public sealed class TeacherManagementService : ITeacherManagementService
         }
     }
 
-    private async Task<IReadOnlyCollection<AttendanceRecordDto>?> GetAttendanceRecordsAsync(int teacherId, int classId, DateOnly attendanceDate, CancellationToken cancellationToken)
+    private async Task<IReadOnlyCollection<AttendanceRecordDto>?> GetAttendanceRecordsAsync(int teacherId, int classId, DateOnly attendanceDate, int scheduleId, CancellationToken cancellationToken)
     {
         if (!await IsAssignedClassAsync(teacherId, classId, cancellationToken))
         {
             return null;
         }
+
+        await EnsureValidAttendanceSlotAsync(classId, scheduleId, attendanceDate, cancellationToken);
 
         var students = await _dbContext.ClassStudents.AsNoTracking()
             .Include(item => item.Student)
@@ -569,7 +697,9 @@ public sealed class TeacherManagementService : ITeacherManagementService
             .ToListAsync(cancellationToken);
 
         var attendances = await _dbContext.Attendances.AsNoTracking()
-            .Where(item => item.ClassId == classId && item.AttendanceDate == attendanceDate)
+            .Where(item => item.ClassId == classId
+                && item.AttendanceDate == attendanceDate
+                && item.ScheduleId == scheduleId)
             .ToListAsync(cancellationToken);
 
         var attendanceLookup = attendances.ToDictionary(item => item.StudentId);
@@ -581,6 +711,7 @@ public sealed class TeacherManagementService : ITeacherManagementService
             return new AttendanceRecordDto
             {
                 AttendanceId = attendance?.AttendanceId,
+                ScheduleId = scheduleId,
                 StudentId = item.StudentId,
                 StudentName = item.Student.Fullname,
                 AttendanceDate = attendanceDate,
@@ -588,6 +719,44 @@ public sealed class TeacherManagementService : ITeacherManagementService
                 Note = attendance?.Note
             };
         }).ToList();
+    }
+
+    private async Task<Schedule> EnsureValidAttendanceSlotAsync(int classId, int scheduleId, DateOnly attendanceDate, CancellationToken cancellationToken)
+    {
+        var schedule = await _dbContext.Schedules.AsNoTracking()
+            .FirstOrDefaultAsync(item => item.ScheduleId == scheduleId && item.ClassId == classId, cancellationToken);
+
+        if (schedule is null)
+        {
+            throw new ArgumentException("The selected slot was not found for this class.");
+        }
+
+        if (schedule.ScheduleDate.HasValue && schedule.ScheduleDate.Value != attendanceDate)
+        {
+            throw new InvalidOperationException("The selected slot does not belong to the selected attendance date.");
+        }
+
+        if (!schedule.ScheduleDate.HasValue && schedule.DayOfWeek != MapToStoredDayOfWeek(attendanceDate.DayOfWeek))
+        {
+            throw new InvalidOperationException("The selected slot does not match the selected attendance date.");
+        }
+
+        return schedule;
+    }
+
+    private static int MapToStoredDayOfWeek(DayOfWeek dayOfWeek)
+    {
+        return dayOfWeek switch
+        {
+            DayOfWeek.Monday => 2,
+            DayOfWeek.Tuesday => 3,
+            DayOfWeek.Wednesday => 4,
+            DayOfWeek.Thursday => 5,
+            DayOfWeek.Friday => 6,
+            DayOfWeek.Saturday => 7,
+            DayOfWeek.Sunday => 8,
+            _ => throw new ArgumentOutOfRangeException(nameof(dayOfWeek), dayOfWeek, "Unsupported day of week.")
+        };
     }
 
     private static TeacherAssignedClassDto MapAssignedClass(Class classEntity, User teacher)

@@ -59,7 +59,7 @@ public sealed class TeacherController : ControllerBase
     }
 
     [HttpGet("classes/{classId:int}/attendance")]
-    public async Task<IActionResult> GetAttendanceByDate(int teacherId, int classId, [FromQuery] DateOnly attendanceDate, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetAttendanceByDate(int teacherId, int classId, [FromQuery] DateOnly attendanceDate, [FromQuery] int scheduleId, CancellationToken cancellationToken)
     {
         var authorizationResult = EnsureAuthorizedTeacher(teacherId);
         if (authorizationResult is not null)
@@ -69,8 +69,40 @@ public sealed class TeacherController : ControllerBase
 
         return await ExecuteAsync(async () =>
         {
-            var attendance = await _teacherManagementService.GetAttendanceByDateAsync(teacherId, classId, attendanceDate, cancellationToken);
+            var attendance = await _teacherManagementService.GetAttendanceByDateAsync(teacherId, classId, attendanceDate, scheduleId, cancellationToken);
             return attendance is null ? NotFound() : Ok(attendance);
+        });
+    }
+
+    [HttpGet("classes/{classId:int}/attendance-slots")]
+    public async Task<IActionResult> GetAttendanceSlots(int teacherId, int classId, [FromQuery] DateOnly attendanceDate, CancellationToken cancellationToken)
+    {
+        var authorizationResult = EnsureAuthorizedTeacher(teacherId);
+        if (authorizationResult is not null)
+        {
+            return authorizationResult;
+        }
+
+        return await ExecuteAsync(async () =>
+        {
+            var slots = await _teacherManagementService.GetAttendanceSlotsAsync(teacherId, classId, attendanceDate, cancellationToken);
+            return slots is null ? NotFound() : Ok(slots);
+        });
+    }
+
+    [HttpPost("classes/{classId:int}/attendance-checkin")]
+    public async Task<IActionResult> CheckInAttendance(int teacherId, int classId, [FromBody] TeacherAttendanceCheckInRequest request, CancellationToken cancellationToken)
+    {
+        var authorizationResult = EnsureAuthorizedTeacher(teacherId);
+        if (authorizationResult is not null)
+        {
+            return authorizationResult;
+        }
+
+        return await ExecuteAsync(async () =>
+        {
+            var slot = await _teacherManagementService.CheckInAttendanceSlotAsync(teacherId, classId, request, cancellationToken);
+            return slot is null ? NotFound() : Ok(slot);
         });
     }
 

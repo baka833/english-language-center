@@ -59,9 +59,19 @@ public sealed class TeacherApiClient : ITeacherApiClient
         return GetOptionalAsync<IReadOnlyCollection<TeacherStudentItem>>($"api/teachers/{teacherId}/classes/{classId}/students", cancellationToken);
     }
 
-    public Task<IReadOnlyCollection<AttendanceRecordItem>?> GetAttendanceByDateAsync(int teacherId, int classId, DateOnly attendanceDate, CancellationToken cancellationToken = default)
+    public Task<IReadOnlyCollection<AttendanceSlotItem>?> GetAttendanceSlotsAsync(int teacherId, int classId, DateOnly attendanceDate, CancellationToken cancellationToken = default)
     {
-        return GetOptionalAsync<IReadOnlyCollection<AttendanceRecordItem>>($"api/teachers/{teacherId}/classes/{classId}/attendance?attendanceDate={attendanceDate:yyyy-MM-dd}", cancellationToken);
+        return GetOptionalAsync<IReadOnlyCollection<AttendanceSlotItem>>($"api/teachers/{teacherId}/classes/{classId}/attendance-slots?attendanceDate={attendanceDate:yyyy-MM-dd}", cancellationToken);
+    }
+
+    public Task<AttendanceSlotItem?> CheckInAttendanceSlotAsync(int teacherId, int classId, TeacherAttendanceCheckInRequestModel request, CancellationToken cancellationToken = default)
+    {
+        return SendOptionalAsync<AttendanceSlotItem>(HttpMethod.Post, $"api/teachers/{teacherId}/classes/{classId}/attendance-checkin", request, cancellationToken);
+    }
+
+    public Task<IReadOnlyCollection<AttendanceRecordItem>?> GetAttendanceByDateAsync(int teacherId, int classId, DateOnly attendanceDate, int scheduleId, CancellationToken cancellationToken = default)
+    {
+        return GetOptionalAsync<IReadOnlyCollection<AttendanceRecordItem>>($"api/teachers/{teacherId}/classes/{classId}/attendance?attendanceDate={attendanceDate:yyyy-MM-dd}&scheduleId={scheduleId}", cancellationToken);
     }
 
     public Task<IReadOnlyCollection<AttendanceRecordItem>?> UpsertAttendanceAsync(int teacherId, int classId, UpsertAttendanceRequestModel request, CancellationToken cancellationToken = default)

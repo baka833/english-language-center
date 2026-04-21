@@ -9,6 +9,8 @@ public partial class Attendance
 
     public int ClassId { get; set; }
 
+    public int? ScheduleId { get; set; }
+
     public int StudentId { get; set; }
 
     public DateOnly AttendanceDate { get; set; }
@@ -18,6 +20,8 @@ public partial class Attendance
     public string? Note { get; set; }
 
     public virtual Class Class { get; set; } = null!;
+
+    public virtual Schedule? Schedule { get; set; }
 
     public virtual User Student { get; set; } = null!;
 }

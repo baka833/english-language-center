@@ -99,7 +99,7 @@ public sealed class TeacherController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> Attendance(int classId, string? attendanceDate, CancellationToken cancellationToken)
+    public async Task<IActionResult> Attendance(int classId, string? attendanceDate, int? scheduleId, CancellationToken cancellationToken)
     {
         var resolvedDate = ResolveAttendanceDate(attendanceDate);
 
@@ -112,20 +112,33 @@ public sealed class TeacherController : Controller
                 return RedirectToAction(nameof(Classes));
             }
 
-            var records = await _teacherApiClient.GetAttendanceByDateAsync(GetCurrentTeacherId(), classId, resolvedDate, cancellationToken);
-            if (records is null)
+            var slots = await _teacherApiClient.GetAttendanceSlotsAsync(GetCurrentTeacherId(), classId, resolvedDate, cancellationToken);
+            if (slots is null)
             {
                 TempData["ErrorMessage"] = "Class was not found.";
                 return RedirectToAction(nameof(Classes));
             }
 
+            var selectedScheduleId = scheduleId ?? slots.FirstOrDefault()?.ScheduleId;
+            var selectedSlot = selectedScheduleId.HasValue
+                ? slots.FirstOrDefault(item => item.ScheduleId == selectedScheduleId.Value)
+                : null;
+            var records = selectedSlot is null
+                ? []
+                : await _teacherApiClient.GetAttendanceByDateAsync(GetCurrentTeacherId(), classId, resolvedDate, selectedSlot.ScheduleId, cancellationToken) ?? [];
+
             return View(new TeacherAttendancePageViewModel
             {
                 ClassId = classId,
                 ClassName = classItem.ClassName,
+                SelectedScheduleId = selectedSlot?.ScheduleId,
+                IsCheckedIn = selectedSlot?.IsCheckedIn == true,
+                CheckedInAt = selectedSlot?.CheckedInAt,
+                Slots = slots,
                 Form = new TeacherAttendanceForm
                 {
                     AttendanceDate = resolvedDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+                    ScheduleId = selectedSlot?.ScheduleId ?? 0,
                     Records = records.Select(item => new TeacherAttendanceRecordForm
                     {
                         StudentId = item.StudentId,
@@ -146,6 +159,37 @@ public sealed class TeacherController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CheckInAttendance(int classId, [Bind(Prefix = "Form")] TeacherAttendanceForm form, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var attendanceDate = ResolveAttendanceDate(form.AttendanceDate);
+            if (form.ScheduleId <= 0)
+            {
+                throw new ArgumentException("Please select a slot before checking in.");
+            }
+
+            var slot = await _teacherApiClient.CheckInAttendanceSlotAsync(GetCurrentTeacherId(), classId, new TeacherAttendanceCheckInRequestModel
+            {
+                AttendanceDate = attendanceDate,
+                ScheduleId = form.ScheduleId
+            }, cancellationToken);
+
+            TempData[slot is null ? "ErrorMessage" : "SuccessMessage"] = slot is null
+                ? "Class or slot was not found."
+                : "Check-in successful. You can now take attendance for this slot.";
+        }
+        catch (Exception exception)
+        {
+            _logger.LogWarning(exception, "Failed to check in for class {ClassId}.", classId);
+            TempData["ErrorMessage"] = exception.Message;
+        }
+
+        return RedirectToAction(nameof(Attendance), new { classId, attendanceDate = form.AttendanceDate, scheduleId = form.ScheduleId });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> SaveAttendance(int classId, [Bind(Prefix = "Form")] TeacherAttendanceForm form, CancellationToken cancellationToken)
     {
         try
@@ -161,6 +205,7 @@ public sealed class TeacherController : Controller
             var result = await _teacherApiClient.UpsertAttendanceAsync(GetCurrentTeacherId(), classId, new UpsertAttendanceRequestModel
             {
                 AttendanceDate = attendanceDate,
+                ScheduleId = form.ScheduleId,
                 Records = records
             }, cancellationToken);
 
@@ -172,7 +217,7 @@ public sealed class TeacherController : Controller
             TempData["ErrorMessage"] = exception.Message;
         }
 
-        return RedirectToAction(nameof(Attendance), new { classId, attendanceDate = form.AttendanceDate });
+        return RedirectToAction(nameof(Attendance), new { classId, attendanceDate = form.AttendanceDate, scheduleId = form.ScheduleId });
     }
 
     [HttpGet]

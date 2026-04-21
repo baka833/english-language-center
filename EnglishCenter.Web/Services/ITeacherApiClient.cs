@@ -10,7 +10,11 @@ public interface ITeacherApiClient
 
     Task<IReadOnlyCollection<TeacherStudentItem>?> GetStudentsByClassAsync(int teacherId, int classId, CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyCollection<AttendanceRecordItem>?> GetAttendanceByDateAsync(int teacherId, int classId, DateOnly attendanceDate, CancellationToken cancellationToken = default);
+    Task<IReadOnlyCollection<AttendanceSlotItem>?> GetAttendanceSlotsAsync(int teacherId, int classId, DateOnly attendanceDate, CancellationToken cancellationToken = default);
+
+    Task<AttendanceSlotItem?> CheckInAttendanceSlotAsync(int teacherId, int classId, TeacherAttendanceCheckInRequestModel request, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyCollection<AttendanceRecordItem>?> GetAttendanceByDateAsync(int teacherId, int classId, DateOnly attendanceDate, int scheduleId, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyCollection<AttendanceRecordItem>?> UpsertAttendanceAsync(int teacherId, int classId, UpsertAttendanceRequestModel request, CancellationToken cancellationToken = default);
 

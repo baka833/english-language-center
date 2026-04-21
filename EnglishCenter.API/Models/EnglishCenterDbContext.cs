@@ -31,6 +31,8 @@ public partial class EnglishCenterDbContext : DbContext
 
     public virtual DbSet<Schedule> Schedules { get; set; }
 
+    public virtual DbSet<TeacherCheckIn> TeacherCheckIns { get; set; }
+
     public virtual DbSet<User> Users { get; set; }
 
 
@@ -73,6 +75,7 @@ public partial class EnglishCenterDbContext : DbContext
 
             entity.Property(e => e.AttendanceId).HasColumnName("AttendanceID");
             entity.Property(e => e.ClassId).HasColumnName("ClassID");
+            entity.Property(e => e.ScheduleId).HasColumnName("ScheduleID");
             entity.Property(e => e.Status).HasMaxLength(20);
             entity.Property(e => e.StudentId).HasColumnName("StudentID");
 
@@ -85,6 +88,10 @@ public partial class EnglishCenterDbContext : DbContext
                 .HasForeignKey(d => d.StudentId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Att_Student");
+
+            entity.HasOne(d => d.Schedule).WithMany(p => p.Attendances)
+                .HasForeignKey(d => d.ScheduleId)
+                .HasConstraintName("FK_Att_Schedule");
         });
 
         modelBuilder.Entity<Class>(entity =>
@@ -206,6 +213,39 @@ public partial class EnglishCenterDbContext : DbContext
             entity.HasOne(d => d.Class).WithMany(p => p.Schedules)
                 .HasForeignKey(d => d.ClassId)
                 .HasConstraintName("FK_Schedule_Class");
+        });
+
+        modelBuilder.Entity<TeacherCheckIn>(entity =>
+        {
+            entity.HasKey(e => e.CheckInId).HasName("PK_TeacherCheckIn");
+
+            entity.ToTable("TeacherCheckIns");
+
+            entity.HasIndex(e => new { e.TeacherId, e.ClassId, e.ScheduleId, e.AttendanceDate }, "UX_TeacherCheckIns_Teacher_Class_Schedule_Date")
+                .IsUnique();
+
+            entity.Property(e => e.CheckInId).HasColumnName("CheckInID");
+            entity.Property(e => e.TeacherId).HasColumnName("TeacherID");
+            entity.Property(e => e.ClassId).HasColumnName("ClassID");
+            entity.Property(e => e.ScheduleId).HasColumnName("ScheduleID");
+            entity.Property(e => e.CheckedInAt)
+                .HasColumnType("datetime")
+                .HasDefaultValueSql("(getutcdate())");
+
+            entity.HasOne(d => d.Teacher).WithMany(p => p.TeacherCheckIns)
+                .HasForeignKey(d => d.TeacherId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_TeacherCheckIn_Teacher");
+
+            entity.HasOne(d => d.Class).WithMany(p => p.TeacherCheckIns)
+                .HasForeignKey(d => d.ClassId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_TeacherCheckIn_Class");
+
+            entity.HasOne(d => d.Schedule).WithMany(p => p.TeacherCheckIns)
+                .HasForeignKey(d => d.ScheduleId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_TeacherCheckIn_Schedule");
         });
 
         modelBuilder.Entity<User>(entity =>

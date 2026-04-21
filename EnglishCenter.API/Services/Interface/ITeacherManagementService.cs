@@ -10,7 +10,11 @@ public interface ITeacherManagementService
 
     Task<IReadOnlyCollection<TeacherStudentDto>?> GetStudentsByClassAsync(int teacherId, int classId, CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyCollection<AttendanceRecordDto>?> GetAttendanceByDateAsync(int teacherId, int classId, DateOnly attendanceDate, CancellationToken cancellationToken = default);
+    Task<IReadOnlyCollection<AttendanceSlotDto>?> GetAttendanceSlotsAsync(int teacherId, int classId, DateOnly attendanceDate, CancellationToken cancellationToken = default);
+
+    Task<AttendanceSlotDto?> CheckInAttendanceSlotAsync(int teacherId, int classId, TeacherAttendanceCheckInRequest request, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyCollection<AttendanceRecordDto>?> GetAttendanceByDateAsync(int teacherId, int classId, DateOnly attendanceDate, int scheduleId, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyCollection<AttendanceRecordDto>?> UpsertAttendanceAsync(int teacherId, int classId, UpsertAttendanceRequest request, CancellationToken cancellationToken = default);
 

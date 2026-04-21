@@ -21,5 +21,9 @@ public partial class Schedule
 
     public string? Room { get; set; }
 
+    public virtual ICollection<Attendance> Attendances { get; set; } = new List<Attendance>();
+
+    public virtual ICollection<TeacherCheckIn> TeacherCheckIns { get; set; } = new List<TeacherCheckIn>();
+
     public virtual Class Class { get; set; } = null!;
 }
