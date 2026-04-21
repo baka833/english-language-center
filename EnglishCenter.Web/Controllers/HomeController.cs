@@ -29,14 +29,13 @@ namespace EnglishCenter.Web.Controllers
                 {
                     return RedirectToAction("Classes", "Teacher");
                 }
+
+                if (User.IsInRole("Student"))
+                {
+                    return RedirectToAction("Schedule", "Student");
+                }
             }
 
-            return View();
-        }
-
-        [AllowAnonymous]
-        public IActionResult Privacy()
-        {
             return View();
         }
 

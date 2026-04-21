@@ -1,4 +1,5 @@
 using EnglishCenter.API.Models;
+using EnglishCenter.API.Services.Interface;
 using Microsoft.IdentityModel.Tokens;
 using System.Collections.Concurrent;
 using System.IdentityModel.Tokens.Jwt;
@@ -6,7 +7,7 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace EnglishCenter.API.Services
+namespace EnglishCenter.API.Services.Impl
 {
     public class JwtService : IJwtService
     {

@@ -1,6 +1,5 @@
 using EnglishCenter.API.Data;
 using EnglishCenter.API.Models;
-using EnglishCenter.API.Services;
 using EnglishCenter.API.Services.Impl;
 using EnglishCenter.API.Services.Interface;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -28,20 +27,21 @@ namespace EnglishCenter.API
             // Add services to the container.
             builder.Services.AddScoped<IAdminManagementService, AdminManagementService>();
             builder.Services.AddScoped<ITeacherManagementService, TeacherManagementService>();
+            builder.Services.AddScoped<IStudentManagementService, StudentManagementService>();
             builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 
             // Add CORS for web client
             builder.Services.AddCors(options =>
             {
-                options.AddPolicy("AllowWebClient", policy =>
-                    policy.WithOrigins("https://localhost:7197")  // Client URL
-                          .AllowAnyHeader()
-                          .AllowAnyMethod());
+                //options.AddPolicy("AllowWebClient", policy =>
+                //    policy.WithOrigins("https://localhost:7197")  // Client URL
+                //          .AllowAnyHeader()
+                //          .AllowAnyMethod());
 
-                //options.AddPolicy("AllowWebClient", 
-                //    policy => policy.AllowAnyOrigin()
-                //                    .AllowAnyHeader()
-                //                    .AllowAnyMethod());
+                options.AddPolicy("AllowWebClient",
+                    policy => policy.AllowAnyOrigin()
+                                    .AllowAnyHeader()
+                                    .AllowAnyMethod());
             });
 
             // JWT Authentication
@@ -70,7 +70,6 @@ namespace EnglishCenter.API
             builder.Services.AddAuthorization();
             builder.Services.AddScoped<IJwtService, JwtService>();
 
-            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen(options =>
             {

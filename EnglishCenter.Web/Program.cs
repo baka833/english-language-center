@@ -1,5 +1,5 @@
-using Microsoft.AspNetCore.Authentication.Cookies;
 using EnglishCenter.Web.Services;
+using Microsoft.AspNetCore.Authentication.Cookies;
 
 namespace EnglishCenter.Web
 {
@@ -9,7 +9,7 @@ namespace EnglishCenter.Web
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // Add services to the container.
+            // Session stores raw JWT tokens after login; ApiAccessTokenHandler reads them to attach Bearer headers.
             builder.Services.AddDistributedMemoryCache();
             builder.Services.AddHttpContextAccessor();
             builder.Services.AddSession(options =>
@@ -18,6 +18,8 @@ namespace EnglishCenter.Web
                 options.Cookie.IsEssential = true;
                 options.IdleTimeout = TimeSpan.FromHours(8);
             });
+
+            // Cookie auth wraps JWT claims in a server-side cookie; actual API calls use the stored token.
             builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
                 .AddCookie(options =>
                 {
@@ -25,56 +27,38 @@ namespace EnglishCenter.Web
                     options.AccessDeniedPath = "/Account/AccessDenied";
                     options.SlidingExpiration = true;
                 });
+
             builder.Services.AddControllersWithViews();
+
+            // ApiAccessTokenHandler injects the session JWT as Authorization: Bearer on every outgoing request.
             builder.Services.AddTransient<ApiAccessTokenHandler>();
-            builder.Services.AddHttpClient<IAuthApiClient, AuthApiClient>((serviceProvider, client) =>
-            {
-                var configuration = serviceProvider.GetRequiredService<IConfiguration>();
-                var baseUrl = configuration["ApiSettings:BaseUrl"];
 
-                if (string.IsNullOrWhiteSpace(baseUrl))
-                {
-                    throw new InvalidOperationException("ApiSettings:BaseUrl is not configured.");
-                }
+            var apiBaseUrl = builder.Configuration["ApiSettings:BaseUrl"]
+                ?? throw new InvalidOperationException("ApiSettings:BaseUrl is not configured.");
+            var apiUri = new Uri(apiBaseUrl.EndsWith('/') ? apiBaseUrl : $"{apiBaseUrl}/");
 
-                client.BaseAddress = new Uri(baseUrl.EndsWith('/') ? baseUrl : $"{baseUrl}/");
-            });
-            builder.Services.AddHttpClient<IAdminApiClient, AdminApiClient>((serviceProvider, client) =>
-            {
-                var configuration = serviceProvider.GetRequiredService<IConfiguration>();
-                var baseUrl = configuration["ApiSettings:BaseUrl"];
+            // Auth client has no token handler — login/register endpoints are unauthenticated.
+            builder.Services.AddHttpClient<IAuthApiClient, AuthApiClient>(c => c.BaseAddress = apiUri);
 
-                if (string.IsNullOrWhiteSpace(baseUrl))
-                {
-                    throw new InvalidOperationException("ApiSettings:BaseUrl is not configured.");
-                }
+            builder.Services.AddHttpClient<IAdminApiClient, AdminApiClient>(c => c.BaseAddress = apiUri)
+                .AddHttpMessageHandler<ApiAccessTokenHandler>();
 
-                client.BaseAddress = new Uri(baseUrl.EndsWith('/') ? baseUrl : $"{baseUrl}/");
-            }).AddHttpMessageHandler<ApiAccessTokenHandler>();
-            builder.Services.AddHttpClient<ITeacherApiClient, TeacherApiClient>((serviceProvider, client) =>
-            {
-                var configuration = serviceProvider.GetRequiredService<IConfiguration>();
-                var baseUrl = configuration["ApiSettings:BaseUrl"];
+            builder.Services.AddHttpClient<ITeacherApiClient, TeacherApiClient>(c => c.BaseAddress = apiUri)
+                .AddHttpMessageHandler<ApiAccessTokenHandler>();
 
-                if (string.IsNullOrWhiteSpace(baseUrl))
-                {
-                    throw new InvalidOperationException("ApiSettings:BaseUrl is not configured.");
-                }
-
-                client.BaseAddress = new Uri(baseUrl.EndsWith('/') ? baseUrl : $"{baseUrl}/");
-            }).AddHttpMessageHandler<ApiAccessTokenHandler>();
+            builder.Services.AddHttpClient<IStudentApiClient, StudentApiClient>(c => c.BaseAddress = apiUri)
+                .AddHttpMessageHandler<ApiAccessTokenHandler>();
 
             var app = builder.Build();
 
-            // Configure the HTTP request pipeline.
             if (!app.Environment.IsDevelopment())
             {
                 app.UseExceptionHandler("/Home/Error");
-                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
 
             app.UseHttpsRedirection();
+
             app.UseStaticFiles();
 
             app.UseRouting();
@@ -85,9 +69,7 @@ namespace EnglishCenter.Web
 
             app.UseAuthorization();
 
-            app.MapControllerRoute(
-                name: "default",
-                pattern: "{controller=Home}/{action=Index}/{id?}");
+            app.MapControllerRoute(name: "default", pattern: "{controller=Home}/{action=Index}/{id?}");
 
             app.Run();
         }
