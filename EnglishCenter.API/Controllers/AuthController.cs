@@ -60,42 +60,6 @@ namespace EnglishCenter.API.Controllers
             });
         }
 
-        [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterRequestDto dto)
-        {
-            if (await _db.Users.AnyAsync(u => u.Username == dto.Username))
-                return Conflict(new { message = "Username already exists." });
-
-            var user = new User
-            {
-                Username = dto.Username,
-                Fullname = dto.Fullname,
-                Email = dto.Email,
-                Gender = dto.Gender,
-                Dob = dto.Dob,
-                Role = "Student",
-                IsActive = true,
-                CreatedAt = DateTime.UtcNow,
-                PasswordHash = string.Empty
-            };
-            user.PasswordHash = _hasher.HashPassword(user, dto.Password);
-
-            _db.Users.Add(user);
-            await _db.SaveChangesAsync();
-
-            var accessToken = _jwt.GenerateAccessToken(user);
-            var refreshToken = _jwt.GenerateRefreshToken();
-            _jwt.SaveRefreshToken(user.UserId, refreshToken);
-
-            return CreatedAtAction(nameof(Login), new AuthResponseDto
-            {
-                AccessToken = accessToken,
-                RefreshToken = refreshToken,
-                Fullname = user.Fullname,
-                Role = user.Role
-            });
-        }
-
         [HttpPost("refresh")]
         public async Task<IActionResult> Refresh([FromBody] RefreshRequestDto dto)
         {
