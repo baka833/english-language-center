@@ -28,6 +28,7 @@ namespace EnglishCenter.API
             builder.Services.AddScoped<IAdminManagementService, AdminManagementService>();
             builder.Services.AddScoped<ITeacherManagementService, TeacherManagementService>();
             builder.Services.AddScoped<IStudentManagementService, StudentManagementService>();
+            builder.Services.AddScoped<IUserProfileService, UserProfileService>();
             builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 
             // Add CORS for web client

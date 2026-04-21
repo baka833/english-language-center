@@ -1,5 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using EnglishCenter.Web.Models.Account;
 using EnglishCenter.Web.Models.Auth;
 using EnglishCenter.Web.Services;
 using Microsoft.AspNetCore.Authentication;
@@ -12,11 +13,13 @@ namespace EnglishCenter.Web.Controllers;
 public sealed class AccountController : Controller
 {
     private readonly IAuthApiClient _authApiClient;
+    private readonly IUserApiClient _userApiClient;
     private readonly ILogger<AccountController> _logger;
 
-    public AccountController(IAuthApiClient authApiClient, ILogger<AccountController> logger)
+    public AccountController(IAuthApiClient authApiClient, IUserApiClient userApiClient, ILogger<AccountController> logger)
     {
         _authApiClient = authApiClient;
+        _userApiClient = userApiClient;
         _logger = logger;
     }
 
@@ -84,6 +87,124 @@ public sealed class AccountController : Controller
     public IActionResult AccessDenied()
     {
         return View();
+    }
+
+    [Authorize]
+    [HttpGet]
+    public async Task<IActionResult> Profile(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var profile = await _userApiClient.GetProfileAsync(cancellationToken);
+            if (profile is null)
+            {
+                TempData["ErrorMessage"] = "Profile could not be loaded.";
+                return RedirectToDefaultWorkspace();
+            }
+
+            return View(new ProfileViewModel { Profile = profile });
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError(exception, "Failed to load profile.");
+            TempData["ErrorMessage"] = exception.Message;
+            return RedirectToDefaultWorkspace();
+        }
+    }
+
+    [Authorize]
+    [HttpGet]
+    public async Task<IActionResult> EditProfile(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var profile = await _userApiClient.GetProfileAsync(cancellationToken);
+            if (profile is null)
+            {
+                TempData["ErrorMessage"] = "Profile could not be loaded.";
+                return RedirectToAction(nameof(Profile));
+            }
+
+            return View(new EditProfileViewModel
+            {
+                Username = profile.Username,
+                Role = profile.Role,
+                Fullname = profile.Fullname,
+                Gender = profile.Gender,
+                Dob = profile.Dob
+            });
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError(exception, "Failed to load profile for editing.");
+            TempData["ErrorMessage"] = exception.Message;
+            return RedirectToAction(nameof(Profile));
+        }
+    }
+
+    [Authorize]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EditProfile(EditProfileViewModel model, CancellationToken cancellationToken)
+    {
+        if (!ModelState.IsValid)
+        {
+            return View(model);
+        }
+
+        var request = new UpdateProfileApiRequest
+        {
+            Fullname = model.Fullname,
+            Gender = model.Gender,
+            Dob = model.Dob
+        };
+
+        var (success, error) = await _userApiClient.UpdateProfileAsync(request, cancellationToken);
+        if (!success)
+        {
+            ModelState.AddModelError(string.Empty, error ?? "Update failed.");
+            return View(model);
+        }
+
+        HttpContext.Session.Clear();
+        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        TempData["SuccessMessage"] = "Profile updated. Please sign in again.";
+        return RedirectToAction(nameof(Login));
+    }
+
+    [Authorize]
+    [HttpGet]
+    public IActionResult ChangePassword()
+    {
+        return View(new ChangePasswordViewModel());
+    }
+
+    [Authorize]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ChangePassword(ChangePasswordViewModel model, CancellationToken cancellationToken)
+    {
+        if (!ModelState.IsValid)
+        {
+            return View(model);
+        }
+
+        var request = new ChangePasswordApiRequest
+        {
+            CurrentPassword = model.CurrentPassword,
+            NewPassword = model.NewPassword,
+            ConfirmPassword = model.ConfirmPassword
+        };
+
+        var (success, error) = await _userApiClient.ChangePasswordAsync(request, cancellationToken);
+        if (!success)
+        {
+            ModelState.AddModelError(string.Empty, error ?? "Password change failed.");
+            return View(model);
+        }
+
+        TempData["SuccessMessage"] = "Password changed successfully.";
+        return RedirectToAction(nameof(Profile));
     }
 
     private ClaimsPrincipal BuildPrincipal(AuthResponseModel auth)

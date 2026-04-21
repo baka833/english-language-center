@@ -35,12 +35,22 @@
                     <ul class="navbar-nav ms-auto app-nav-links">
                         @if (User.Identity?.IsAuthenticated == true)
                         {
-                            <li class="nav-item nav-user-badge"><span class="nav-link">@displayName</span></li>
-                            <li class="nav-item">
-                                <form method="post" asp-controller="Account" asp-action="Logout">
-                                    @Html.AntiForgeryToken()
-                                    <button class="nav-link nav-button" type="submit">Sign out</button>
-                                </form>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    @displayName
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item" asp-controller="Account" asp-action="Profile">Profile</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Account" asp-action="EditProfile">Edit Profile</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Account" asp-action="ChangePassword">Change Password</a></li>
+                                    <li><hr class="dropdown-divider" /></li>
+                                    <li>
+                                        <form method="post" asp-controller="Account" asp-action="Logout">
+                                            @Html.AntiForgeryToken()
+                                            <button class="dropdown-item" type="submit">Sign out</button>
+                                        </form>
+                                    </li>
+                                </ul>
                             </li>
                         }
                         else

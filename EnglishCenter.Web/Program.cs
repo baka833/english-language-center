@@ -49,6 +49,9 @@ namespace EnglishCenter.Web
             builder.Services.AddHttpClient<IStudentApiClient, StudentApiClient>(c => c.BaseAddress = apiUri)
                 .AddHttpMessageHandler<ApiAccessTokenHandler>();
 
+            builder.Services.AddHttpClient<IUserApiClient, UserApiClient>(c => c.BaseAddress = apiUri)
+                .AddHttpMessageHandler<ApiAccessTokenHandler>();
+
             var app = builder.Build();
 
             if (!app.Environment.IsDevelopment())
