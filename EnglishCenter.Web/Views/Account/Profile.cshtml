@@ -1,0 +1,48 @@
+@model ProfileViewModel
+@using EnglishCenter.Web.Models.Account
+
+@{
+    ViewData["Title"] = "My Profile";
+}
+
+<section class="page-shell">
+    <div class="page-header compact-header">
+        <div>
+            <p class="eyebrow">Account</p>
+            <h1>@Model.Profile.Fullname</h1>
+            <p>@Model.Profile.Username · @Model.Profile.Role</p>
+        </div>
+        <div class="action-stack">
+            <a class="btn btn-primary" asp-action="EditProfile">Edit Profile</a>
+            <a class="btn btn-outline-secondary" asp-action="ChangePassword">Change Password</a>
+        </div>
+    </div>
+
+    <section class="panel-card">
+        <div class="panel-heading">
+            <h2>Profile Details</h2>
+        </div>
+        <dl class="detail-list">
+            <div class="detail-row">
+                <dt>Username</dt>
+                <dd>@Model.Profile.Username</dd>
+            </div>
+            <div class="detail-row">
+                <dt>Role</dt>
+                <dd>@Model.Profile.Role</dd>
+            </div>
+            <div class="detail-row">
+                <dt>Full Name</dt>
+                <dd>@Model.Profile.Fullname</dd>
+            </div>
+            <div class="detail-row">
+                <dt>Gender</dt>
+                <dd>@(string.IsNullOrWhiteSpace(Model.Profile.Gender) ? "—" : Model.Profile.Gender)</dd>
+            </div>
+            <div class="detail-row">
+                <dt>Date of Birth</dt>
+                <dd>@(Model.Profile.Dob.HasValue ? Model.Profile.Dob.Value.ToString("dd/MM/yyyy") : "—")</dd>
+            </div>
+        </dl>
+    </section>
+</section>

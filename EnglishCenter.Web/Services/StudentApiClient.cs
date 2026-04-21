@@ -58,6 +58,16 @@ public sealed class StudentApiClient : IStudentApiClient
         return SendRequiredAsync<StudentApplicationItem>(HttpMethod.Post, $"api/students/{studentId}/applications", request, cancellationToken);
     }
 
+    public Task<IReadOnlyCollection<StudentClassItem>> GetClassesAsync(int studentId, CancellationToken cancellationToken = default)
+    {
+        return GetRequiredAsync<IReadOnlyCollection<StudentClassItem>>($"api/students/{studentId}/classes", cancellationToken);
+    }
+
+    public Task<StudentClassDetailItem> GetClassDetailAsync(int studentId, int classId, CancellationToken cancellationToken = default)
+    {
+        return GetRequiredAsync<StudentClassDetailItem>($"api/students/{studentId}/classes/{classId}", cancellationToken);
+    }
+
     private async Task<T> GetRequiredAsync<T>(string path, CancellationToken cancellationToken)
     {
         using var response = await _httpClient.GetAsync(path, cancellationToken);

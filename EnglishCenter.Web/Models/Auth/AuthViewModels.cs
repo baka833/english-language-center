@@ -18,8 +18,6 @@ public sealed class AuthResponseModel
 {
     public string AccessToken { get; set; } = string.Empty;
 
-    public string RefreshToken { get; set; } = string.Empty;
-
     public string Fullname { get; set; } = string.Empty;
 
     public string? Role { get; set; }

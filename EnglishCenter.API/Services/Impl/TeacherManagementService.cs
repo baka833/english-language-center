@@ -1,4 +1,5 @@
-using EnglishCenter.API.DTOs;
+using EnglishCenter.API.DTOs.Admin;
+using EnglishCenter.API.DTOs.Teacher;
 using EnglishCenter.API.Models;
 using EnglishCenter.API.Services.Interface;
 using Microsoft.EntityFrameworkCore;

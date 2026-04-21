@@ -1,0 +1,59 @@
+@model StudentClassesPageViewModel
+@using EnglishCenter.Web.Models.Student
+
+@{
+    ViewData["Title"] = "My Classes";
+}
+
+<section class="page-shell">
+    <div class="page-header">
+        <h1>My Classes</h1>
+    </div>
+
+    <section class="panel-card">
+        @if (Model.Classes.Count == 0)
+        {
+            <div class="response-box">
+                <strong>You are not enrolled in any classes.</strong>
+                <p>Contact your administrator to enroll in a class.</p>
+            </div>
+        }
+        else
+        {
+            <div class="list-stack">
+                @foreach (var item in Model.Classes)
+                {
+                    var statusClass = item.Status switch
+                    {
+                        "Opening" => "chip-success",
+                        "Ongoing" => "chip-info",
+                        "Closed" => "chip-muted",
+                        _ => "chip-muted"
+                    };
+
+                    <article class="item-card teacher-card">
+                        <div>
+                            <h3>@item.ClassName</h3>
+                            <p>@item.CourseName</p>
+                            <span class="micro-meta">
+                                Teacher: @(item.TeacherName ?? "TBA")
+                                &nbsp;·&nbsp;
+                                @(item.StartDate.HasValue ? item.StartDate.Value.ToString("dd/MM/yyyy") : "—")
+                                –
+                                @(item.EndDate.HasValue ? item.EndDate.Value.ToString("dd/MM/yyyy") : "—")
+                                @if (item.EnrollmentDate.HasValue)
+                                {
+                                    <text>&nbsp;·&nbsp;Enrolled: @item.EnrollmentDate.Value.ToString("dd/MM/yyyy")</text>
+                                }
+                            </span>
+                        </div>
+                        <div class="action-stack">
+                            <span class="meta-chip @statusClass">@(item.Status ?? "Unknown")</span>
+                            <a class="btn btn-outline-secondary" asp-action="ClassDetail" asp-route-classId="@item.ClassId">View Details</a>
+                        </div>
+                    </article>
+                }
+            </div>
+        }
+    </section>
+</section>

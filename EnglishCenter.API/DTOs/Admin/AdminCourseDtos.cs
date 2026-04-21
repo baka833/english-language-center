@@ -1,4 +1,4 @@
-namespace EnglishCenter.API.DTOs;
+namespace EnglishCenter.API.DTOs.Admin;
 
 public sealed class CourseDto
 {

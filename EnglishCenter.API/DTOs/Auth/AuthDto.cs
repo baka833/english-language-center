@@ -1,4 +1,4 @@
-namespace EnglishCenter.API.DTOs
+namespace EnglishCenter.API.DTOs.Auth
 {
     public class LoginRequestDto
     {
@@ -16,15 +16,9 @@ namespace EnglishCenter.API.DTOs
         public DateOnly? Dob { get; set; }
     }
 
-    public class RefreshRequestDto
-    {
-        public string RefreshToken { get; set; } = null!;
-    }
-
     public class AuthResponseDto
     {
         public string AccessToken { get; set; } = null!;
-        public string RefreshToken { get; set; } = null!;
         public string Fullname { get; set; } = null!;
         public string? Role { get; set; }
     }

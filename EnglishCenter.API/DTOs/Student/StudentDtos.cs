@@ -1,6 +1,15 @@
-namespace EnglishCenter.Web.Models.Student;
+namespace EnglishCenter.API.DTOs.Student;
 
-public sealed class StudentScheduleItem
+public sealed class CreateStudentApplicationRequest
+{
+    public string Title { get; set; } = string.Empty;
+
+    public string? Content { get; set; }
+
+    public string Type { get; set; } = string.Empty;
+}
+
+public sealed class StudentScheduleItemDto
 {
     public int ScheduleId { get; set; }
 
@@ -27,39 +36,7 @@ public sealed class StudentScheduleItem
     public string? Room { get; set; }
 }
 
-public sealed class StudentApplicationItem
-{
-    public int AppId { get; set; }
-
-    public int SenderId { get; set; }
-
-    public string SenderName { get; set; } = string.Empty;
-
-    public string SenderRole { get; set; } = string.Empty;
-
-    public string Title { get; set; } = string.Empty;
-
-    public string? Content { get; set; }
-
-    public string? Type { get; set; }
-
-    public string? Status { get; set; }
-
-    public string? AdminResponse { get; set; }
-
-    public DateTime? CreatedAt { get; set; }
-}
-
-public sealed class CreateStudentApplicationRequestModel
-{
-    public string Title { get; set; } = string.Empty;
-
-    public string? Content { get; set; }
-
-    public string Type { get; set; } = string.Empty;
-}
-
-public sealed class StudentClassItem
+public sealed class StudentClassDto
 {
     public int ClassId { get; set; }
 
@@ -80,7 +57,7 @@ public sealed class StudentClassItem
     public DateTime? EnrollmentDate { get; set; }
 }
 
-public sealed class StudentClassAttendanceItem
+public sealed class StudentAttendanceItemDto
 {
     public int AttendanceId { get; set; }
 
@@ -99,7 +76,7 @@ public sealed class StudentClassAttendanceItem
     public string? Note { get; set; }
 }
 
-public sealed class StudentClassGradeItem
+public sealed class StudentGradeItemDto
 {
     public int ComponentId { get; set; }
 
@@ -112,7 +89,7 @@ public sealed class StudentClassGradeItem
     public string? TeacherComment { get; set; }
 }
 
-public sealed class StudentClassDetailItem
+public sealed class StudentClassDetailDto
 {
     public int ClassId { get; set; }
 
@@ -132,7 +109,7 @@ public sealed class StudentClassDetailItem
 
     public DateTime? EnrollmentDate { get; set; }
 
-    public IReadOnlyCollection<StudentClassAttendanceItem> Attendance { get; set; } = [];
+    public IReadOnlyCollection<StudentAttendanceItemDto> Attendance { get; set; } = [];
 
-    public IReadOnlyCollection<StudentClassGradeItem> Grades { get; set; } = [];
+    public IReadOnlyCollection<StudentGradeItemDto> Grades { get; set; } = [];
 }

@@ -1,0 +1,54 @@
+@model EditProfileViewModel
+@using EnglishCenter.Web.Models.Account
+
+@{
+    ViewData["Title"] = "Edit Profile";
+}
+
+<section class="page-shell">
+    <div class="page-header compact-header">
+        <div>
+            <p class="eyebrow">Account</p>
+            <h1>Edit Profile</h1>
+            <p>@Model.Username · @Model.Role</p>
+        </div>
+        <a class="btn btn-outline-secondary" asp-action="Profile">Back to Profile</a>
+    </div>
+
+    <section class="panel-card">
+        <div class="panel-heading">
+            <h2>Update Your Details</h2>
+            <span class="meta-chip">Changes will require you to sign in again</span>
+        </div>
+        <form method="post" asp-action="EditProfile" class="stack-form">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="Username" />
+            <input type="hidden" asp-for="Role" />
+            <div asp-validation-summary="All" class="text-danger"></div>
+            <label>
+                <span>Full Name</span>
+                <input asp-for="Fullname" />
+                <span asp-validation-for="Fullname" class="text-danger"></span>
+            </label>
+            <div class="form-split">
+                <label>
+                    <span>Gender</span>
+                    <select asp-for="Gender">
+                        <option value="">— Not specified —</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </label>
+                <label>
+                    <span>Date of Birth</span>
+                    <input asp-for="Dob" type="date" />
+                </label>
+            </div>
+            <div class="action-stack">
+                <button class="btn btn-primary" type="submit">Save Changes</button>
+                <a class="btn btn-outline-secondary" asp-action="Profile">Cancel</a>
+            </div>
+        </form>
+    </section>
+</section>

@@ -1,0 +1,176 @@
+@model StudentClassDetailPageViewModel
+@using EnglishCenter.Web.Models.Student
+
+@{
+    ViewData["Title"] = Model.Detail.ClassName;
+}
+
+<section class="page-shell">
+    <div class="page-header">
+        <div>
+            <p class="eyebrow">
+                <a asp-action="Classes">My Classes</a>
+                &nbsp;/&nbsp;
+                @Model.Detail.ClassName
+            </p>
+            <h1>@Model.Detail.ClassName</h1>
+            <p>@Model.Detail.CourseName</p>
+        </div>
+        <div class="action-stack">
+            <a class="btn btn-outline-secondary" asp-action="Classes">Back to Classes</a>
+        </div>
+    </div>
+
+    <section class="panel-card">
+        <div class="panel-heading">
+            <h2>Class Information</h2>
+        </div>
+        <div class="teacher-schedule-stats">
+            <article>
+                <span>Teacher</span>
+                <strong>@(Model.Detail.TeacherName ?? "TBA")</strong>
+            </article>
+            <article>
+                <span>Status</span>
+                <strong>@(Model.Detail.Status ?? "Unknown")</strong>
+            </article>
+            <article>
+                <span>Start Date</span>
+                <strong>@(Model.Detail.StartDate.HasValue ? Model.Detail.StartDate.Value.ToString("dd/MM/yyyy") : "—")</strong>
+            </article>
+            <article>
+                <span>End Date</span>
+                <strong>@(Model.Detail.EndDate.HasValue ? Model.Detail.EndDate.Value.ToString("dd/MM/yyyy") : "—")</strong>
+            </article>
+            @if (Model.Detail.EnrollmentDate.HasValue)
+            {
+                <article>
+                    <span>Enrolled On</span>
+                    <strong>@Model.Detail.EnrollmentDate.Value.ToString("dd/MM/yyyy")</strong>
+                </article>
+            }
+        </div>
+    </section>
+
+    <section class="panel-card">
+        <div class="panel-heading">
+            <div>
+                <h2>Attendance</h2>
+                <p class="muted-line">Your attendance records for this class.</p>
+            </div>
+        </div>
+
+        <div class="teacher-schedule-stats">
+            <article>
+                <span>Total Sessions</span>
+                <strong>@Model.Detail.Attendance.Count</strong>
+            </article>
+            <article>
+                <span>Present</span>
+                <strong>@Model.PresentCount</strong>
+            </article>
+            <article>
+                <span>Absent</span>
+                <strong>@Model.AbsentCount</strong>
+            </article>
+            <article>
+                <span>Late</span>
+                <strong>@Model.LateCount</strong>
+            </article>
+            <article>
+                <span>Excused</span>
+                <strong>@Model.ExcusedCount</strong>
+            </article>
+        </div>
+
+        @if (Model.Detail.Attendance.Count == 0)
+        {
+            <div class="response-box">
+                <strong>No attendance records yet.</strong>
+                <p>Records will appear here once your teacher starts marking attendance.</p>
+            </div>
+        }
+        else
+        {
+            <div class="list-stack">
+                @foreach (var item in Model.Detail.Attendance)
+                {
+                    var statusClass = item.Status switch
+                    {
+                        "Present" => "chip-success",
+                        "Late" => "chip-warning",
+                        "Absent" => "chip-danger",
+                        "Excused" => "chip-info",
+                        _ => "chip-muted"
+                    };
+
+                    <article class="item-card teacher-card">
+                        <div>
+                            <strong>@item.AttendanceDate.ToString("dddd, dd MMMM yyyy")</strong>
+                            <span class="micro-meta">
+                                @item.StartTime.ToString("HH:mm") – @item.EndTime.ToString("HH:mm")
+                                &nbsp;·&nbsp;
+                                Room: @(string.IsNullOrWhiteSpace(item.Room) ? "TBA" : item.Room)
+                            </span>
+                            @if (!string.IsNullOrWhiteSpace(item.Note))
+                            {
+                                <p class="muted-line">@item.Note</p>
+                            }
+                        </div>
+                        <span class="meta-chip @statusClass">@(item.Status ?? "—")</span>
+                    </article>
+                }
+            </div>
+        }
+    </section>
+
+    <section class="panel-card">
+        <div class="panel-heading">
+            <div>
+                <h2>Grades</h2>
+                <p class="muted-line">Your scores for each grade component in this class.</p>
+            </div>
+            @if (Model.WeightedAverage.HasValue)
+            {
+                <div>
+                    <p class="eyebrow">Weighted Average</p>
+                    <strong style="font-size: 1.5rem">@Model.WeightedAverage.Value.ToString("F2")</strong>
+                </div>
+            }
+        </div>
+
+        @if (Model.Detail.Grades.Count == 0)
+        {
+            <div class="response-box">
+                <strong>No grade components defined for this class.</strong>
+                <p>Grades will appear here once your teacher sets up grading criteria.</p>
+            </div>
+        }
+        else
+        {
+            <div class="list-stack">
+                @foreach (var item in Model.Detail.Grades)
+                {
+                    <article class="item-card teacher-card">
+                        <div>
+                            <strong>@item.ComponentName</strong>
+                            <span class="micro-meta">Weight: @item.Weight.ToString("F1")%</span>
+                            @if (!string.IsNullOrWhiteSpace(item.TeacherComment))
+                            {
+                                <p class="muted-line">@item.TeacherComment</p>
+                            }
+                        </div>
+                        @if (item.GradeValue.HasValue)
+                        {
+                            <span class="reference-chip">@item.GradeValue.Value.ToString("F2")</span>
+                        }
+                        else
+                        {
+                            <span class="meta-chip chip-muted">Not graded</span>
+                        }
+                    </article>
+                }
+            </div>
+        }
+    </section>
+</section>
