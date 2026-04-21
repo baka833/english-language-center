@@ -1,4 +1,4 @@
-using EnglishCenter.API.DTOs;
+using EnglishCenter.API.DTOs.Student;
 using EnglishCenter.API.Services.Interface;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -52,6 +52,36 @@ public sealed class StudentsController : ControllerBase
         }
 
         return await ExecuteAsync(async () => Ok(await _studentManagementService.CreateApplicationAsync(studentId, request, cancellationToken)));
+    }
+
+    [HttpGet("classes")]
+    public async Task<IActionResult> GetClasses(int studentId, CancellationToken cancellationToken)
+    {
+        var authorizationResult = EnsureAuthorizedStudent(studentId);
+        if (authorizationResult is not null)
+        {
+            return authorizationResult;
+        }
+
+        return await ExecuteAsync(async () => Ok(await _studentManagementService.GetClassesAsync(studentId, cancellationToken)));
+    }
+
+    [HttpGet("classes/{classId:int}")]
+    public async Task<IActionResult> GetClassDetail(int studentId, int classId, CancellationToken cancellationToken)
+    {
+        var authorizationResult = EnsureAuthorizedStudent(studentId);
+        if (authorizationResult is not null)
+        {
+            return authorizationResult;
+        }
+
+        return await ExecuteAsync(async () =>
+        {
+            var detail = await _studentManagementService.GetClassDetailAsync(studentId, classId, cancellationToken);
+            return detail is null
+                ? NotFound(new { message = "Class not found or you are not enrolled in it." })
+                : Ok(detail);
+        });
     }
 
     private IActionResult? EnsureAuthorizedStudent(int studentId)

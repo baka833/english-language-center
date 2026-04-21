@@ -58,3 +58,23 @@ public sealed class StudentApplicationForm
 
     public string? Content { get; set; }
 }
+
+public sealed class StudentClassesPageViewModel
+{
+    public IReadOnlyCollection<StudentClassItem> Classes { get; set; } = [];
+}
+
+public sealed class StudentClassDetailPageViewModel
+{
+    public StudentClassDetailItem Detail { get; set; } = new();
+
+    public int PresentCount { get; set; }
+
+    public int AbsentCount { get; set; }
+
+    public int LateCount { get; set; }
+
+    public int ExcusedCount { get; set; }
+
+    public decimal? WeightedAverage { get; set; }
+}

@@ -1,4 +1,5 @@
-using EnglishCenter.API.DTOs;
+using EnglishCenter.API.DTOs.Admin;
+using EnglishCenter.API.DTOs.Student;
 using EnglishCenter.API.Models;
 using EnglishCenter.API.Services.Interface;
 using Microsoft.EntityFrameworkCore;
@@ -127,6 +128,110 @@ public sealed class StudentManagementService : IStudentManagementService
             Status = application.Status,
             AdminResponse = application.AdminResponse,
             CreatedAt = application.CreatedAt
+        };
+    }
+
+    public async Task<IReadOnlyCollection<StudentClassDto>> GetClassesAsync(int studentId, CancellationToken cancellationToken = default)
+    {
+        await EnsureStudentAsync(studentId, cancellationToken);
+
+        return await _dbContext.ClassStudents.AsNoTracking()
+            .Where(item => item.StudentId == studentId)
+            .OrderBy(item => item.Class.ClassName)
+            .Select(item => new StudentClassDto
+            {
+                ClassId = item.ClassId,
+                ClassName = item.Class.ClassName,
+                CourseId = item.Class.CourseId,
+                CourseName = item.Class.Course.CourseName,
+                TeacherName = item.Class.Teacher != null ? item.Class.Teacher.Fullname : null,
+                StartDate = item.Class.StartDate,
+                EndDate = item.Class.EndDate,
+                Status = item.Class.Status,
+                EnrollmentDate = item.EnrollmentDate
+            })
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<StudentClassDetailDto?> GetClassDetailAsync(int studentId, int classId, CancellationToken cancellationToken = default)
+    {
+        await EnsureStudentAsync(studentId, cancellationToken);
+
+        var enrollment = await _dbContext.ClassStudents.AsNoTracking()
+            .Where(item => item.StudentId == studentId && item.ClassId == classId)
+            .Select(item => new
+            {
+                item.EnrollmentDate,
+                ClassId = item.Class.ClassId,
+                ClassName = item.Class.ClassName,
+                CourseId = item.Class.CourseId,
+                CourseName = item.Class.Course.CourseName,
+                TeacherName = item.Class.Teacher != null ? item.Class.Teacher.Fullname : null,
+                StartDate = item.Class.StartDate,
+                EndDate = item.Class.EndDate,
+                Status = item.Class.Status
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (enrollment is null)
+        {
+            return null;
+        }
+
+        var attendance = await _dbContext.Attendances.AsNoTracking()
+            .Where(item => item.StudentId == studentId && item.Schedule.ClassId == classId)
+            .OrderBy(item => item.AttendanceDate)
+            .ThenBy(item => item.Schedule.StartTime)
+            .Select(item => new StudentAttendanceItemDto
+            {
+                AttendanceId = item.AttendanceId,
+                ScheduleId = item.ScheduleId,
+                AttendanceDate = item.AttendanceDate,
+                StartTime = item.Schedule.StartTime,
+                EndTime = item.Schedule.EndTime,
+                Room = item.Schedule.Room,
+                Status = item.Status,
+                Note = item.Note
+            })
+            .ToListAsync(cancellationToken);
+
+        var components = await _dbContext.GradeComponents.AsNoTracking()
+            .Where(item => item.ClassId == classId)
+            .OrderBy(item => item.ComponentName)
+            .Select(item => new { item.ComponentId, item.ComponentName, item.Weight })
+            .ToListAsync(cancellationToken);
+
+        var componentIds = components.Select(item => item.ComponentId).ToList();
+        var gradesByComponent = await _dbContext.Grades.AsNoTracking()
+            .Where(item => item.StudentId == studentId && componentIds.Contains(item.ComponentId))
+            .ToDictionaryAsync(item => item.ComponentId, cancellationToken);
+
+        var grades = components.Select(component =>
+        {
+            gradesByComponent.TryGetValue(component.ComponentId, out var grade);
+            return new StudentGradeItemDto
+            {
+                ComponentId = component.ComponentId,
+                ComponentName = component.ComponentName,
+                Weight = component.Weight,
+                GradeValue = grade?.GradeValue,
+                TeacherComment = grade?.TeacherComment
+            };
+        }).ToList();
+
+        return new StudentClassDetailDto
+        {
+            ClassId = enrollment.ClassId,
+            ClassName = enrollment.ClassName,
+            CourseId = enrollment.CourseId,
+            CourseName = enrollment.CourseName,
+            TeacherName = enrollment.TeacherName,
+            StartDate = enrollment.StartDate,
+            EndDate = enrollment.EndDate,
+            Status = enrollment.Status,
+            EnrollmentDate = enrollment.EnrollmentDate,
+            Attendance = attendance,
+            Grades = grades
         };
     }
 

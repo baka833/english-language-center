@@ -64,6 +64,58 @@ public sealed class StudentController : Controller
         }
     }
 
+    [HttpGet]
+    public async Task<IActionResult> Classes(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var classes = await _studentApiClient.GetClassesAsync(GetCurrentStudentId(), cancellationToken);
+            return View(new StudentClassesPageViewModel { Classes = classes });
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError(exception, "Failed to load student classes.");
+            TempData["ErrorMessage"] = exception.Message;
+            return View(new StudentClassesPageViewModel());
+        }
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> ClassDetail(int classId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var detail = await _studentApiClient.GetClassDetailAsync(GetCurrentStudentId(), classId, cancellationToken);
+
+            var attendanceCounts = detail.Attendance
+                .GroupBy(item => item.Status ?? string.Empty, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(g => g.Key, g => g.Count(), StringComparer.OrdinalIgnoreCase);
+
+            decimal? weightedAverage = null;
+            var totalWeight = detail.Grades.Sum(item => item.Weight);
+            if (totalWeight > 0 && detail.Grades.Any(item => item.GradeValue.HasValue))
+            {
+                weightedAverage = detail.Grades.Sum(item => (item.GradeValue ?? 0) * item.Weight) / totalWeight;
+            }
+
+            return View(new StudentClassDetailPageViewModel
+            {
+                Detail = detail,
+                PresentCount = attendanceCounts.GetValueOrDefault("Present"),
+                AbsentCount = attendanceCounts.GetValueOrDefault("Absent"),
+                LateCount = attendanceCounts.GetValueOrDefault("Late"),
+                ExcusedCount = attendanceCounts.GetValueOrDefault("Excused"),
+                WeightedAverage = weightedAverage
+            });
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError(exception, "Failed to load class detail for class {ClassId}.", classId);
+            TempData["ErrorMessage"] = exception.Message;
+            return RedirectToAction(nameof(Classes));
+        }
+    }
+
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> CreateApplication([Bind(Prefix = "CreateForm")] StudentApplicationForm form, CancellationToken cancellationToken)

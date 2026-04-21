@@ -1,4 +1,5 @@
-using EnglishCenter.API.DTOs;
+using EnglishCenter.API.DTOs.Admin;
+using EnglishCenter.API.DTOs.Student;
 
 namespace EnglishCenter.API.Services.Interface;
 
@@ -9,4 +10,8 @@ public interface IStudentManagementService
     Task<IReadOnlyCollection<ApplicationDto>> GetApplicationsAsync(int studentId, CancellationToken cancellationToken = default);
 
     Task<ApplicationDto> CreateApplicationAsync(int studentId, CreateStudentApplicationRequest request, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyCollection<StudentClassDto>> GetClassesAsync(int studentId, CancellationToken cancellationToken = default);
+
+    Task<StudentClassDetailDto?> GetClassDetailAsync(int studentId, int classId, CancellationToken cancellationToken = default);
 }
