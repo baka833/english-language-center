@@ -1,6 +1,6 @@
 using EnglishCenter.Web.Models.Student;
 
-namespace EnglishCenter.Web.Services;
+namespace EnglishCenter.Web.Services.Interface;
 
 public interface IStudentApiClient
 {

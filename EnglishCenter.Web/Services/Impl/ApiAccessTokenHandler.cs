@@ -1,7 +1,7 @@
 using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Http;
 
-namespace EnglishCenter.Web.Services;
+namespace EnglishCenter.Web.Services.Impl;
 
 public sealed class ApiAccessTokenHandler : DelegatingHandler
 {

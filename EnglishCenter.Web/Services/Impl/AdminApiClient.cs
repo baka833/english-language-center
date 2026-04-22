@@ -2,8 +2,9 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using EnglishCenter.Web.Models.Admin;
+using EnglishCenter.Web.Services.Interface;
 
-namespace EnglishCenter.Web.Services;
+namespace EnglishCenter.Web.Services.Impl;
 
 public sealed class AdminApiClient : IAdminApiClient
 {
