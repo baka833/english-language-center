@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Security.Claims;
 using EnglishCenter.Web.Models.Student;
-using EnglishCenter.Web.Services;
+using EnglishCenter.Web.Services.Interface;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

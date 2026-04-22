@@ -3,7 +3,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using EnglishCenter.Web.Models.Account;
 
-namespace EnglishCenter.Web.Services;
+namespace EnglishCenter.Web.Services.Interface;
 
 public sealed class UserApiClient : IUserApiClient
 {

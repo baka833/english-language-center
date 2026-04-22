@@ -1,6 +1,6 @@
 using EnglishCenter.Web.Models.Account;
 
-namespace EnglishCenter.Web.Services;
+namespace EnglishCenter.Web.Services.Interface;
 
 public interface IUserApiClient
 {

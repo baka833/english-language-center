@@ -1,4 +1,4 @@
-namespace EnglishCenter.Web.Services;
+namespace EnglishCenter.Web.Services.Impl;
 
 public static class AuthSessionKeys
 {

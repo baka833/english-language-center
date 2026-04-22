@@ -1,4 +1,5 @@
-using EnglishCenter.Web.Services;
+using EnglishCenter.Web.Services.Impl;
+using EnglishCenter.Web.Services.Interface;
 using Microsoft.AspNetCore.Authentication.Cookies;
 
 namespace EnglishCenter.Web
