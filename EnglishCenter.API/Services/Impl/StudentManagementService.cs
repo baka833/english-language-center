@@ -97,9 +97,24 @@ public sealed class StudentManagementService : IStudentManagementService
             throw new ArgumentException("Application title is required.", nameof(request));
         }
 
+        if (request.Title.Trim().Length > 200)
+        {
+            throw new ArgumentException("Application title cannot exceed 200 characters.", nameof(request));
+        }
+
         if (string.IsNullOrWhiteSpace(request.Type))
         {
             throw new ArgumentException("Application type is required.", nameof(request));
+        }
+
+        if (request.Type.Trim().Length > 50)
+        {
+            throw new ArgumentException("Application type cannot exceed 50 characters.", nameof(request));
+        }
+
+        if (request.Content?.Length > 2000)
+        {
+            throw new ArgumentException("Application content cannot exceed 2000 characters.", nameof(request));
         }
 
         var application = new Application

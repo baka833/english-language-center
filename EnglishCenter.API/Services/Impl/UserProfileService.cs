@@ -29,6 +29,12 @@ public sealed class UserProfileService : IUserProfileService
 
     public async Task<(bool Success, string? Error)> UpdateProfileAsync(int userId, UpdateProfileRequest request, CancellationToken cancellationToken = default)
     {
+        var profileError = ValidateProfileRequest(request);
+        if (profileError is not null)
+        {
+            return (false, profileError);
+        }
+
         var user = await _dbContext.Users.SingleOrDefaultAsync(u => u.UserId == userId, cancellationToken);
         if (user is null)
         {
@@ -45,6 +51,21 @@ public sealed class UserProfileService : IUserProfileService
 
     public async Task<(bool Success, string? Error)> ChangePasswordAsync(int userId, ChangePasswordRequest request, CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrWhiteSpace(request.CurrentPassword) || string.IsNullOrWhiteSpace(request.NewPassword))
+        {
+            return (false, "Current and new password are required.");
+        }
+
+        if (!string.Equals(request.NewPassword, request.ConfirmPassword, StringComparison.Ordinal))
+        {
+            return (false, "Confirm password does not match new password.");
+        }
+
+        if (string.Equals(request.CurrentPassword, request.NewPassword, StringComparison.Ordinal))
+        {
+            return (false, "New password must be different from current password.");
+        }
+
         var user = await _dbContext.Users.SingleOrDefaultAsync(u => u.UserId == userId, cancellationToken);
         if (user is null)
         {
@@ -80,6 +101,42 @@ public sealed class UserProfileService : IUserProfileService
             return "Password must contain at least one digit.";
         if (!Regex.IsMatch(password, @"[^a-zA-Z0-9]"))
             return "Password must contain at least one special character.";
+        return null;
+    }
+
+    private static string? ValidateProfileRequest(UpdateProfileRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Fullname))
+        {
+            return "Fullname is required.";
+        }
+
+        if (request.Fullname.Trim().Length > 100)
+        {
+            return "Fullname cannot exceed 100 characters.";
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.Gender))
+        {
+            var gender = request.Gender.Trim();
+            if (gender.Length > 10)
+            {
+                return "Gender cannot exceed 10 characters.";
+            }
+
+            if (!string.Equals(gender, "Male", StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(gender, "Female", StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(gender, "Other", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Gender must be one of: Male, Female, Other.";
+            }
+        }
+
+        if (request.Dob.HasValue && request.Dob.Value > DateOnly.FromDateTime(DateTime.Today))
+        {
+            return "Date of birth cannot be in the future.";
+        }
+
         return null;
     }
 

@@ -597,9 +597,24 @@ public sealed class TeacherManagementService : ITeacherManagementService
             throw new ArgumentException("Application title is required.", nameof(request));
         }
 
+        if (request.Title.Trim().Length > 200)
+        {
+            throw new ArgumentException("Application title cannot exceed 200 characters.", nameof(request));
+        }
+
         if (string.IsNullOrWhiteSpace(request.Type))
         {
             throw new ArgumentException("Application type is required.", nameof(request));
+        }
+
+        if (request.Type.Trim().Length > 50)
+        {
+            throw new ArgumentException("Application type cannot exceed 50 characters.", nameof(request));
+        }
+
+        if (request.Content?.Length > 2000)
+        {
+            throw new ArgumentException("Application content cannot exceed 2000 characters.", nameof(request));
         }
 
         var application = new Application
@@ -859,6 +874,11 @@ public sealed class TeacherManagementService : ITeacherManagementService
             throw new ArgumentException("Component name is required.", nameof(request));
         }
 
+        if (request.ComponentName.Trim().Length > 100)
+        {
+            throw new ArgumentException("Component name cannot exceed 100 characters.", nameof(request));
+        }
+
         if (request.Weight <= 0 || request.Weight > 100)
         {
             throw new ArgumentException("Component weight must be greater than 0 and less than or equal to 100.", nameof(request));
@@ -870,6 +890,11 @@ public sealed class TeacherManagementService : ITeacherManagementService
         if (request.GradeValue.HasValue && (request.GradeValue.Value < 0 || request.GradeValue.Value > 10))
         {
             throw new ArgumentException("Grade value must be between 0 and 10.", nameof(request));
+        }
+
+        if (request.TeacherComment?.Length > 1000)
+        {
+            throw new ArgumentException("Teacher comment cannot exceed 1000 characters.", nameof(request));
         }
     }
 

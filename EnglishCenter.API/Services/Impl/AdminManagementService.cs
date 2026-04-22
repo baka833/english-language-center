@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Security.Cryptography;
+using System.Text.RegularExpressions;
 using EnglishCenter.API.DTOs.Admin;
 using EnglishCenter.API.Models;
 using EnglishCenter.API.Services.Interface;
@@ -30,6 +31,20 @@ public sealed class AdminManagementService : IAdminManagementService
         "Pending",
         "Approved",
         "Rejected"
+    };
+
+    private static readonly HashSet<string> ClassStatuses = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Opening",
+        "Ongoing",
+        "Completed"
+    };
+
+    private static readonly HashSet<string> AllowedGenders = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Male",
+        "Female",
+        "Other"
     };
 
     private readonly EnglishCenterDbContext _dbContext;
@@ -69,12 +84,8 @@ public sealed class AdminManagementService : IAdminManagementService
 
     public async Task<UserDetailDto> CreateUserAsync(CreateUserRequest request, CancellationToken cancellationToken = default)
     {
+        ValidateCreateUserRequest(request);
         ValidateManagedRole(request.Role);
-
-        if (string.IsNullOrWhiteSpace(request.Password))
-        {
-            throw new ArgumentException("Password is required.", nameof(request));
-        }
 
         var username = request.Username.Trim();
         if (await _dbContext.Users.AnyAsync(user => user.Username == username, cancellationToken))
@@ -105,6 +116,7 @@ public sealed class AdminManagementService : IAdminManagementService
 
     public async Task<UserDetailDto?> UpdateUserAsync(int userId, UpdateUserRequest request, CancellationToken cancellationToken = default)
     {
+        ValidateUpdateUserRequest(request);
         ValidateManagedRole(request.Role);
 
         var user = await _dbContext.Users.FirstOrDefaultAsync(item => item.UserId == userId, cancellationToken);
@@ -196,9 +208,15 @@ public sealed class AdminManagementService : IAdminManagementService
     {
         ValidateCourseRequest(request);
 
+        var normalizedCourseName = request.CourseName.Trim();
+        if (await _dbContext.Courses.AnyAsync(item => item.CourseName == normalizedCourseName, cancellationToken))
+        {
+            throw new InvalidOperationException("Course name already exists.");
+        }
+
         var course = new Course
         {
-            CourseName = request.CourseName.Trim(),
+            CourseName = normalizedCourseName,
             Description = NormalizeOptional(request.Description),
             Price = request.Price,
             TotalSlots = request.TotalSlots
@@ -214,13 +232,19 @@ public sealed class AdminManagementService : IAdminManagementService
     {
         ValidateCourseRequest(request);
 
+        var normalizedCourseName = request.CourseName.Trim();
+        if (await _dbContext.Courses.AnyAsync(item => item.CourseId != courseId && item.CourseName == normalizedCourseName, cancellationToken))
+        {
+            throw new InvalidOperationException("Course name already exists.");
+        }
+
         var course = await _dbContext.Courses.FirstOrDefaultAsync(item => item.CourseId == courseId, cancellationToken);
         if (course is null)
         {
             return null;
         }
 
-        course.CourseName = request.CourseName.Trim();
+        course.CourseName = normalizedCourseName;
         course.Description = NormalizeOptional(request.Description);
         course.Price = request.Price;
         course.TotalSlots = request.TotalSlots;
@@ -269,7 +293,14 @@ public sealed class AdminManagementService : IAdminManagementService
 
     public async Task<ClassDetailDto> CreateClassAsync(CreateClassRequest request, CancellationToken cancellationToken = default)
     {
-        await ValidateClassRequestAsync(request.CourseId, request.TeacherId, request.StartDate, request.EndDate, cancellationToken);
+        await ValidateClassRequestAsync(
+            request.ClassName,
+            request.CourseId,
+            request.TeacherId,
+            request.StartDate,
+            request.EndDate,
+            request.Status,
+            cancellationToken);
 
         var classEntity = new Class
         {
@@ -299,7 +330,14 @@ public sealed class AdminManagementService : IAdminManagementService
             return null;
         }
 
-        await ValidateClassRequestAsync(request.CourseId, classEntity.TeacherId, request.StartDate, request.EndDate, cancellationToken);
+        await ValidateClassRequestAsync(
+            request.ClassName,
+            request.CourseId,
+            classEntity.TeacherId,
+            request.StartDate,
+            request.EndDate,
+            request.Status,
+            cancellationToken);
 
         classEntity.ClassName = request.ClassName.Trim();
         classEntity.CourseId = request.CourseId;
@@ -379,6 +417,11 @@ public sealed class AdminManagementService : IAdminManagementService
         if (!classExists)
         {
             return null;
+        }
+
+        if (studentIds.Count == 0)
+        {
+            throw new ArgumentException("At least one student must be provided.", nameof(studentIds));
         }
 
         var distinctStudentIds = studentIds.Distinct().ToArray();
@@ -545,6 +588,7 @@ public sealed class AdminManagementService : IAdminManagementService
     public async Task<IReadOnlyCollection<ScheduleDto>?> UpdateClassSchedulesAsync(int classId, IReadOnlyCollection<UpsertScheduleRequest> schedules, CancellationToken cancellationToken = default)
     {
         var classEntity = await _dbContext.Classes
+            .Include(item => item.Course)
             .Include(item => item.Schedules)
             .FirstOrDefaultAsync(item => item.ClassId == classId, cancellationToken);
 
@@ -555,7 +599,21 @@ public sealed class AdminManagementService : IAdminManagementService
 
         foreach (var schedule in schedules)
         {
-            ValidateSchedule(schedule);
+            ValidateSchedule(schedule, classEntity.StartDate, classEntity.EndDate);
+        }
+
+        var duplicateSlots = schedules
+            .GroupBy(item => new { item.ScheduleDate, item.StartTime, item.EndTime })
+            .Where(group => group.Count() > 1)
+            .ToList();
+        if (duplicateSlots.Count > 0)
+        {
+            throw new ArgumentException("Duplicate schedule slots are not allowed.");
+        }
+
+        if (classEntity.Course?.TotalSlots is > 0 && schedules.Count > classEntity.Course.TotalSlots.Value)
+        {
+            throw new ArgumentException($"Schedule count cannot exceed total slots ({classEntity.Course.TotalSlots.Value}) defined by the course.");
         }
 
         _dbContext.Schedules.RemoveRange(classEntity.Schedules);
@@ -606,6 +664,11 @@ public sealed class AdminManagementService : IAdminManagementService
     public async Task<ApplicationDto?> RespondApplicationAsync(int applicationId, RespondApplicationRequest request, CancellationToken cancellationToken = default)
     {
         ValidateApplicationStatus(request.Status);
+
+        if (request.AdminResponse?.Length > 1000)
+        {
+            throw new ArgumentException("Admin response cannot exceed 1000 characters.", nameof(request));
+        }
 
         var application = await _dbContext.Applications
             .Include(item => item.Sender)
@@ -877,9 +940,26 @@ public sealed class AdminManagementService : IAdminManagementService
         };
     }
 
-    private async Task ValidateClassRequestAsync(int courseId, int? teacherId, DateOnly? startDate, DateOnly? endDate, CancellationToken cancellationToken)
+    private async Task ValidateClassRequestAsync(
+        string className,
+        int courseId,
+        int? teacherId,
+        DateOnly? startDate,
+        DateOnly? endDate,
+        string? status,
+        CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(courseId.ToString()))
+        if (string.IsNullOrWhiteSpace(className))
+        {
+            throw new ArgumentException("ClassName is required.");
+        }
+
+        if (className.Trim().Length > 100)
+        {
+            throw new ArgumentException("ClassName cannot exceed 100 characters.");
+        }
+
+        if (courseId <= 0)
         {
             throw new ArgumentException("CourseId is required.");
         }
@@ -893,6 +973,22 @@ public sealed class AdminManagementService : IAdminManagementService
         {
             var teacher = await _dbContext.Users.FirstOrDefaultAsync(item => item.UserId == teacherId.Value, cancellationToken);
             ValidateTeacher(teacher, teacherId.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(status) && !ClassStatuses.Contains(status.Trim()))
+        {
+            throw new ArgumentException("Status must be one of: Opening, Ongoing, Completed.");
+        }
+
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        if (startDate.HasValue && startDate.Value > today)
+        {
+            throw new ArgumentException("StartDate cannot be in the future.");
+        }
+
+        if (endDate.HasValue && endDate.Value < today)
+        {
+            throw new ArgumentException("EndDate cannot be in the past.");
         }
 
         if (startDate.HasValue && endDate.HasValue && startDate.Value > endDate.Value)
@@ -934,18 +1030,28 @@ public sealed class AdminManagementService : IAdminManagementService
             throw new ArgumentException("CourseName is required.", nameof(request));
         }
 
-        if (request.Price.HasValue && request.Price.Value < 0)
+        if (request.CourseName.Trim().Length > 200)
         {
-            throw new ArgumentException("Price cannot be negative.", nameof(request));
+            throw new ArgumentException("CourseName cannot exceed 200 characters.", nameof(request));
         }
 
-        if (request.TotalSlots.HasValue && request.TotalSlots.Value < 0)
+        if (request.Description?.Length > 1000)
         {
-            throw new ArgumentException("TotalSlots cannot be negative.", nameof(request));
+            throw new ArgumentException("Description cannot exceed 1000 characters.", nameof(request));
+        }
+
+        if (request.Price.HasValue && request.Price.Value <= 0)
+        {
+            throw new ArgumentException("Price must be greater than 0.", nameof(request));
+        }
+
+        if (request.TotalSlots.HasValue && request.TotalSlots.Value <= 0)
+        {
+            throw new ArgumentException("TotalSlots must be greater than 0.", nameof(request));
         }
     }
 
-    private static void ValidateSchedule(UpsertScheduleRequest schedule)
+    private static void ValidateSchedule(UpsertScheduleRequest schedule, DateOnly? classStartDate, DateOnly? classEndDate)
     {
         if (!schedule.ScheduleDate.HasValue)
         {
@@ -965,6 +1071,21 @@ public sealed class AdminManagementService : IAdminManagementService
         if (schedule.StartTime >= schedule.EndTime)
         {
             throw new ArgumentException("StartTime must be earlier than EndTime.");
+        }
+
+        if (schedule.Room?.Length > 50)
+        {
+            throw new ArgumentException("Room cannot exceed 50 characters.");
+        }
+
+        if (classStartDate.HasValue && schedule.ScheduleDate.Value < classStartDate.Value)
+        {
+            throw new ArgumentException("ScheduleDate cannot be earlier than class StartDate.");
+        }
+
+        if (classEndDate.HasValue && schedule.ScheduleDate.Value > classEndDate.Value)
+        {
+            throw new ArgumentException("ScheduleDate cannot be later than class EndDate.");
         }
     }
 
@@ -1089,6 +1210,144 @@ public sealed class AdminManagementService : IAdminManagementService
             var value when value.Equals("Rejected", StringComparison.OrdinalIgnoreCase) => "Rejected",
             _ => status.Trim()
         };
+    }
+
+    private static void ValidateCreateUserRequest(CreateUserRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Username))
+        {
+            throw new ArgumentException("Username is required.", nameof(request));
+        }
+
+        if (request.Username.Trim().Length > 50)
+        {
+            throw new ArgumentException("Username cannot exceed 50 characters.", nameof(request));
+        }
+
+        if (string.IsNullOrWhiteSpace(request.Fullname))
+        {
+            throw new ArgumentException("Fullname is required.", nameof(request));
+        }
+
+        if (request.Fullname.Trim().Length > 100)
+        {
+            throw new ArgumentException("Fullname cannot exceed 100 characters.", nameof(request));
+        }
+
+        if (string.IsNullOrWhiteSpace(request.Password))
+        {
+            throw new ArgumentException("Password is required.", nameof(request));
+        }
+
+        var passwordError = ValidatePasswordComplexity(request.Password);
+        if (passwordError is not null)
+        {
+            throw new ArgumentException(passwordError, nameof(request));
+        }
+
+        ValidateOptionalEmail(request.Email);
+        ValidateOptionalGender(request.Gender);
+        ValidateOptionalDob(request.Dob);
+    }
+
+    private static void ValidateUpdateUserRequest(UpdateUserRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Fullname))
+        {
+            throw new ArgumentException("Fullname is required.", nameof(request));
+        }
+
+        if (request.Fullname.Trim().Length > 100)
+        {
+            throw new ArgumentException("Fullname cannot exceed 100 characters.", nameof(request));
+        }
+
+        ValidateOptionalEmail(request.Email);
+        ValidateOptionalGender(request.Gender);
+        ValidateOptionalDob(request.Dob);
+    }
+
+    private static void ValidateOptionalEmail(string? email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            return;
+        }
+
+        if (email.Trim().Length > 100)
+        {
+            throw new ArgumentException("Email cannot exceed 100 characters.");
+        }
+
+        try
+        {
+            _ = new System.Net.Mail.MailAddress(email.Trim());
+        }
+        catch (FormatException)
+        {
+            throw new ArgumentException("Email is not valid.");
+        }
+    }
+
+    private static void ValidateOptionalGender(string? gender)
+    {
+        if (string.IsNullOrWhiteSpace(gender))
+        {
+            return;
+        }
+
+        if (gender.Trim().Length > 10)
+        {
+            throw new ArgumentException("Gender cannot exceed 10 characters.");
+        }
+
+        if (!AllowedGenders.Contains(gender.Trim()))
+        {
+            throw new ArgumentException("Gender must be one of: Male, Female, Other.");
+        }
+    }
+
+    private static void ValidateOptionalDob(DateOnly? dob)
+    {
+        if (!dob.HasValue)
+        {
+            return;
+        }
+
+        if (dob.Value > DateOnly.FromDateTime(DateTime.Today))
+        {
+            throw new ArgumentException("Date of birth cannot be in the future.");
+        }
+    }
+
+    private static string? ValidatePasswordComplexity(string password)
+    {
+        if (password.Length < 8)
+        {
+            return "Password must be at least 8 characters.";
+        }
+
+        if (!password.Any(char.IsUpper))
+        {
+            return "Password must contain at least one uppercase letter.";
+        }
+
+        if (!password.Any(char.IsLower))
+        {
+            return "Password must contain at least one lowercase letter.";
+        }
+
+        if (!password.Any(char.IsDigit))
+        {
+            return "Password must contain at least one digit.";
+        }
+
+        if (!Regex.IsMatch(password, "[^a-zA-Z0-9]"))
+        {
+            return "Password must contain at least one special character.";
+        }
+
+        return null;
     }
 
     private static string GeneratePassword()
