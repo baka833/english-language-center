@@ -1,12 +1,9 @@
-﻿/* Live export of selected EnglishCenterDB application tables */
-/* Source: LAPTOP-O0IHPN5P\MSSQLSERVER01 / EnglishCenterDB */
-/* Generated: 2026-04-21 21:18:05 */
+﻿CREATE DATABASE [EnglishCenterDB]
+GO
 
 USE [EnglishCenterDB]
 GO
 
-/****** Schema ******/
-/****** Object:  Table [dbo].[Courses]    Script Date: 21/04/2026 21:18:06 ******/
 SET ANSI_NULLS ON
 GO
 
