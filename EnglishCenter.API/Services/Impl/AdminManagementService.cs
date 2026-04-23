@@ -558,6 +558,20 @@ public sealed class AdminManagementService : IAdminManagementService
             throw new ArgumentException($"This class can only have {allowedSelections} scheduled session(s) based on the course slot rule.");
         }
 
+        var scheduleIds = classEntity.Schedules.Select(s => s.ScheduleId).ToList();
+        if (scheduleIds.Count > 0)
+        {
+            var attendancesToDelete = await _dbContext.Attendances
+                .Where(a => scheduleIds.Contains(a.ScheduleId))
+                .ToListAsync(cancellationToken);
+            _dbContext.Attendances.RemoveRange(attendancesToDelete);
+
+            var teacherCheckInsToDelete = await _dbContext.TeacherCheckIns
+                .Where(t => scheduleIds.Contains(t.ScheduleId))
+                .ToListAsync(cancellationToken);
+            _dbContext.TeacherCheckIns.RemoveRange(teacherCheckInsToDelete);
+        }
+
         _dbContext.Schedules.RemoveRange(classEntity.Schedules);
         if (outsideWeekSchedules.Count > 0)
         {
